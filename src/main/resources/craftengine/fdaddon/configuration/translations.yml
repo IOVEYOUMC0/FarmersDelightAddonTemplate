@@ -1,0 +1,7 @@
+translations:
+  en_us:
+    item.fdaddon.example_jerky: "Example Jerky"
+    block.fdaddon.example_block: "Example Block"
+  zh_cn:
+    item.fdaddon.example_jerky: "示例肉干"
+    block.fdaddon.example_block: "示例方块"

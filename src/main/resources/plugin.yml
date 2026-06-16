@@ -1,0 +1,12 @@
+name: FDAddonTemplate
+version: '${version}'
+main: com.example.fdaddon.FDAddonTemplate
+api-version: '1.21'
+folia-supported: true
+description: Example addon template for the FarmersDelight (CraftEngine) plugin.
+authors:
+  - YourName
+# depend (not soft-depend): CraftEngine + FarmersDelight must load before this addon so their
+# items/blocks and the api.** facade exist when onEnable runs. The addon has no commands of its own —
+# reloading and recipe-viewing are driven by FarmersDelight (/fd reload, /fd recipe book).
+depend: [CraftEngine, FarmersDelight]

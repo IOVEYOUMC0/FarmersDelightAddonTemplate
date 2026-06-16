@@ -1,0 +1,62 @@
+# =============================================================================================
+# CraftEngine config — TEACHING TEMPLATE (heavily commented on purpose).
+# In a SHIPPING addon, keep CE config comment-free to match FarmersDelight's own style; put notes in
+# the README/commit instead. Here we comment everything so you can learn the fields.
+#
+# CraftEngine loads every *.yml under craftengine/<namespace>/configuration/. Organize BY TYPE like FD:
+#   items.yml (items + templates + recipes), food_block.yml (food blocks + display items),
+#   blocks.yml (blocks + furniture), gui.yml (GUIs + images), translations.yml.
+# =============================================================================================
+
+# Templates are reusable bases; `template:` on an item merges these fields. ${__NAMESPACE__}/${__ID__}
+# expand to the item's namespace/id, so one template drives many items' models.
+templates:
+  fdaddon:food_template:
+    material: cooked_beef                      # the vanilla item this custom item is "based on"
+    model: ${__NAMESPACE__}:item/${__ID__}     # -> resourcepack/assets/fdaddon/models/item/<id>.json
+
+items:
+  # ── A custom food item with an on-eat effect ──────────────────────────────────────────────
+  fdaddon:example_jerky:
+    template: fdaddon:food_template
+    data:
+      item-name: <!i><l10n:item.fdaddon.example_jerky>   # <!i> = no italics; <l10n:key> from translations.yml
+      food:
+        nutrition: 4
+        saturation: 0.8
+        can-always-eat: false
+    # events fire on player actions; here, eating applies a potion effect. (No hardcoding in Java —
+    # effects live in config.) `potion-effect` accepts vanilla or any plugin-registered effect id.
+    events:
+      - on: consume
+        functions:
+          - type: potion_effect
+            potion-effect: minecraft:speed
+            duration: 600
+            amplifier: 0
+            particles: true
+
+  # ── Override a VANILLA item to add a behavior (e.g. make it place a block) ────────────────
+  # CraftEngine can attach behaviors to vanilla items by keying the entry with a minecraft: id.
+  # `ground_block_item` makes the item place a (food) block on right-click — how FD pies work.
+  # fdaddon:example_block:
+  #   material: pumpkin_pie
+  #   behavior:
+  #     type: ground_block_item
+  #     block: fdaddon:example_block
+
+# CraftEngine native recipe types: shaped / shapeless / smelting / smoking / blasting /
+# campfire_cooking / stonecutting. (Cooking-pot & cutting-board recipes are NOT CE recipes — register
+# those through FarmersDelightApi from Java; see recipes/cooking_pot_recipes.yml.)
+recipes:
+  fdaddon:example_jerky:
+    type: shapeless
+    category: misc
+    ingredients:
+      - "minecraft:cooked_beef"
+      - "minecraft:dried_kelp"
+    result:
+      id: fdaddon:example_jerky
+      count: 1
+  # Tag ingredients use a leading '#'. Because '#' starts a YAML comment, such values MUST be quoted:
+  #   ingredients: { P: "#minecraft:planks" }

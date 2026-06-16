@@ -1,0 +1,5 @@
+author: YourName
+version: 0.0.1
+description: Example FarmersDelight addon (CraftEngine pack)
+namespace: fdaddon
+enable: true
