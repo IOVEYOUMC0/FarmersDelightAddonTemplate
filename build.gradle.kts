@@ -24,10 +24,11 @@ dependencies {
 
     // FarmersDelight — the ONLY thing you may reference is its obfuscation-safe `api.**` facade.
     // FD's internals are repackaged/renamed by ProGuard; only `com.huidu.farmersdelight.api.**` keeps
-    // stable names. Vendor FD's jar here for compile-only: build it in the Farmersdelight repo with
-    // `gradlew shadowJar` and copy build/libs/farmersdelight-*.jar into this repo's libs/.
-    // At runtime the real (obfuscated) FarmersDelight plugin provides those api classes.
-    compileOnly(files("libs/farmersdelight-1.0.0.jar"))
+    // stable names. This is an API-ONLY stub jar (just `com.huidu.farmersdelight.api.**`, no internals,
+    // not a runnable plugin) — build it in the FarmersDelight repo with `gradlew apiJar` and copy
+    // build/libs/farmersdelight-plugin-*-api.jar into this repo's libs/ (renamed).
+    // At runtime the real FarmersDelight plugin (a server dependency) provides the implementation.
+    compileOnly(files("libs/farmersdelight-api-1.0.0.jar"))
 }
 
 java {

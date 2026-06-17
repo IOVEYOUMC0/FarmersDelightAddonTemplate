@@ -66,9 +66,8 @@ public final class FDAddonTemplate extends JavaPlugin implements Listener {
             return;
         }
 
-        // 1) Register your addon's recipe TYPE so its recipes appear in FD's recipe book
-        //    (opened via /fd recipe book, the recipe-menu button, or FarmersDelightApi.openRecipeBook).
-        //    When yours is the only registered type, the book opens straight to your recipe list.
+        // 1) Register your addon's recipe TYPE so its recipes can be shown in a recipe book. ExampleRecipeType
+        //    also provides its OWN book layout (list/detail) — see showRecipes() to open it independently.
         FarmersDelightApi.get().registerRecipeType(new ExampleRecipeType());
 
         // 2) Cooking-pot / cutting-board recipes load when CraftEngine items are ready. FD itself defers
@@ -150,10 +149,14 @@ public final class FDAddonTemplate extends JavaPlugin implements Listener {
         // Example: nothing to do here — see the methods below for what the api offers.
     }
 
-    /** Open FD's recipe book for a player (e.g. from your own block/GUI). */
+    /** Open the recipe book for a player (e.g. from your own block/GUI). */
     public void showRecipes(Player player) {
-        // No filler -> read-only book. Pass a RecipeFiller to add a "Fill" button that fills your station.
-        FarmersDelightApi.get().openRecipeBook(player);
+        // Independent book: opens straight to YOUR type using the layouts ExampleRecipeType provides — never
+        // a shared category menu with other addons. Pass a RecipeFiller to add a "Fill" button.
+        FarmersDelightApi.get().openRecipeBook(player, NS + ":example", null);
+        // Alternatives:
+        //   openRecipeBook(player)                 -> FD's shared book, read-only (all registered types).
+        //   openRecipeBook(player, filler)         -> shared book with a Fill button.
     }
 
     /** Heat-source queries (e.g. for your own cooking block): is this block a configured heat source? */

@@ -34,9 +34,11 @@ FarmersDelight ships **obfuscated** — ProGuard renames/repackages everything *
 
 ## Build setup
 
-1. Build FarmersDelight's jar (in the Farmersdelight repo: `gradlew shadowJar`) and copy
-   `build/libs/farmersdelight-*.jar` into this project's **`libs/`** (it's a compile-only, gitignored
-   vendored jar — the real plugin provides those `api.**` classes at runtime).
+1. Build FarmersDelight's **api-only** stub (in the FarmersDelight repo: `gradlew apiJar`) and copy
+   `build/libs/farmersdelight-plugin-*-api.jar` into this project's **`libs/`** as
+   `farmersdelight-api-1.0.0.jar` (compile-only, gitignored). It contains ONLY
+   `com.huidu.farmersdelight.api.**` — no FD internals, not a runnable plugin — and the real FarmersDelight
+   plugin provides the implementation at runtime.
 2. `./gradlew shadowJar` → `build/libs/fdaddontemplate-1.0.0.jar`.
 3. Drop the jar in `plugins/` next to FarmersDelight + CraftEngine. `plugin.yml` `depend:` ensures load order.
 
@@ -52,7 +54,8 @@ Get the singleton with `FarmersDelightApi.get()`. **Guard every call with `isAva
 | `registerCookingPotRecipe(id, ingredients, container, result, exp, cookTime, category)` | real cooking-pot recipe; survives `/fd reload` |
 | `registerCuttingBoardRecipe(id, input, tool, results, sound)` | real cutting-board recipe |
 | `unregisterCookingPotRecipe(id)` / `unregisterCuttingBoardRecipe(id)` | remove the above |
-| `openRecipeBook(player)` / `openRecipeBook(player, filler)` | open the recipe book (filler adds a "Fill" button) |
+| `openRecipeBook(player)` / `openRecipeBook(player, filler)` | open FD's shared recipe book (filler adds a "Fill" button) |
+| `openRecipeBook(player, typeId, filler)` | open an **independent** book for just your type (uses its own layout; never a shared menu) |
 | `openRecipeEditor(player, typeId, recipeId)` | open the editor for an editable type |
 | `isHeatSource(block)` / `isConductor(block)` | heat-source queries for your cooking blocks |
 | `runAtLocation(loc, task)` / `runLaterAtLocation(loc, task, ticks)` / `runRepeating(task, delay, period)` | Folia-safe scheduling (repeating returns an `ApiTask`) |
@@ -63,7 +66,13 @@ Helper + event classes (also under `api.**`):
 - `api.item.FarmersDelightItems` — `idOf` / `create` / `matchesId` / `matchesTag` / `displayNameOf` /
   `idsOf` / `tagIdsOf`. CraftEngine-aware; use instead of raw `Material` checks.
 - `api.recipe.*` — `RecipeType`, `ViewableRecipe`, `RecipeFiller`, `RecipeEditor`, `EditableRecipe`,
-  `NumericField`, and read-only `FarmersDelightRecipes` (query FD's own cooking-pot/cutting-board recipes).
+  `NumericField`, `RecipeBookLayout` (give your type its own book layout — see `ExampleRecipeType`), and
+  read-only `FarmersDelightRecipes` (query FD's own cooking-pot/cutting-board recipes).
+  - **Independent recipe book**: override `RecipeType.listLayout()` / `detailLayout()` to return a
+    `RecipeBookLayout` (title + grid + decoration items, built from your own gui.yml; titles may carry
+    CraftEngine `<image:>`/`<shift:>` for custom-texture backgrounds). `ViewableRecipe.displaySlots()`
+    maps custom roles (e.g. `fluid`, `tool`) to extra detail slots. Open with `openRecipeBook(player,
+    typeId, filler)`. Return null from the layouts to fall back to FD's shared book.
 - `api.scheduler.ApiTask` — cancel handle for repeating tasks.
 - `api.event.*` — `FarmersDelightReloadEvent`, `FarmersDelightProduceEvent`, `ProfessionCookingExperienceEvent`.
 
