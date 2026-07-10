@@ -64,7 +64,8 @@ Get the singleton with `FarmersDelightApi.get()`. **Guard every call with `isAva
 Helper + event classes (also under `api.**`):
 
 - `api.item.FarmersDelightItems` — `idOf` / `create` / `matchesId` / `matchesTag` / `displayNameOf` /
-  `idsOf` / `tagIdsOf`. CraftEngine-aware; use instead of raw `Material` checks.
+  `idsOf` / `tagIdsOf` / `isCustomItem` / `customIdOf` / `craftingRemainderOf` / `applyDisplay` / `buildIcon`.
+  CraftEngine-aware; use instead of raw `Material` checks (the display helpers are covered under "More API surface").
 - `api.recipe.*` — `RecipeType`, `ViewableRecipe`, `RecipeFiller`, `RecipeEditor`, `EditableRecipe`,
   `NumericField`, `RecipeBookLayout` (give your type its own book layout — see `ExampleRecipeType`), and
   read-only `FarmersDelightRecipes` (query FD's own cooking-pot/cutting-board recipes).
@@ -75,6 +76,98 @@ Helper + event classes (also under `api.**`):
     typeId, filler)`. Return null from the layouts to fall back to FD's shared book.
 - `api.scheduler.ApiTask` — cancel handle for repeating tasks.
 - `api.event.*` — `FarmersDelightReloadEvent`, `FarmersDelightProduceEvent`, `ProfessionCookingExperienceEvent`.
+
+## More API surface (text, items, effects, advancements, recipe queries, discovery)
+
+All under `com.huidu.farmersdelight.api.**`. Guard with `FarmersDelightApi.get().isAvailable()` (advancements also have their own `FarmersDelightAdvancements.isAvailable()`). [`FDAddonTemplate.java`](src/main/java/com/example/fdaddon/FDAddonTemplate.java) has runnable examples: `foodEffects`, `advancements`, `recipeQueries`, `textAndMessages`, `recipeDiscovery`.
+
+### Rich text & messages — `api.text.FarmersDelightText` / `FarmersDelightMessages`
+
+`render` turns a template into a Component per viewer: `{key}` placeholders → `<l10n:key>` / `<lang:key>` translation tags (viewer locale) → CraftEngine `<image:ns:id>` / `<shift:N>` glyphs → MiniMessage + legacy `&` colors.
+
+```java
+Component c = FarmersDelightText.render("<green>Hi {name}!", player, Map.of("name", player.getName()));
+List<Component> lore = FarmersDelightText.buildLore(List.of("<gray>Line"), player, Map.of()); // italic stripped
+Component glyph = FarmersDelightText.glyph("ns:icon_id");        // a single CraftEngine image glyph
+FarmersDelightMessages.send(player, "<gold>Saved");
+FarmersDelightMessages.actionBar(player, "<gray>{n} left", Map.of("n", "3"));
+FarmersDelightMessages.title(player, "<aqua>Title", "<gray>Subtitle", 10, 40, 10, Map.of());
+```
+
+Threading: messages and food effects touch the player — call them on the player's owning thread (main on Paper, the player's region thread on Folia), never from an async task.
+
+### Item display & helpers — `api.item.FarmersDelightItems`
+
+`isCustomItem` / `customIdOf` / `craftingRemainderOf`, plus item-display builders that share FD's renderer (l10n tags + glyphs + colors, italic stripped):
+
+```java
+FarmersDelightItems.applyDisplay(item, "<gold>Name", List.of("<gray>Lore"), player, Map.of());
+ItemStack icon = FarmersDelightItems.buildIcon("ns:id", "<gold>Name", List.of("<gray>Lore"), player, Map.of());
+```
+
+### Food effects — `api.effect.FarmersDelightFoodEffects`
+
+FarmersDelight's Comfort (slow regen while unsaturated) and Nourishment (suppress exhaustion):
+
+```java
+FarmersDelightFoodEffects.applyComfort(player, 600);             // seconds
+FarmersDelightFoodEffects.registerComfortFood("ns:food", 600);  // eating ns:food grants it; survives /fd reload
+boolean has = FarmersDelightFoodEffects.hasNourishment(player);
+```
+
+For more than a handful of foods, drive the mapping from your own `config.yml` instead of hard-coding ids
+in Java — admins can tune it, your reload listener picks it up, and the pattern stays the same for any
+addon. See `BrewinAndChewin/src/main/java/com/huidu/brewinandchewin/util/FoodEffectRegistrar.java` for a
+~50-line drop-in helper: hold one per plugin, call `apply(getConfig().getConfigurationSection("food-effects"))`
+on enable + reload, `clear()` on disable. Config shape:
+
+```yaml
+food-effects:
+  nourishment:
+    "myaddon:hearty_stew": 300   # seconds
+  comfort:
+    "myaddon:warm_tea": 60
+```
+
+### Advancements — `api.advancement.FarmersDelightAdvancements` (+ `AdvancementTree`)
+
+Needs the **UltimateAdvancementAPI** plugin. Grant/check FarmersDelight's own tab, or register your own tab from plain data — FD builds the real UAA tab and rebuilds it across `/fd reload`:
+
+```java
+if (FarmersDelightAdvancements.isAvailable()) {
+    FarmersDelightAdvancements.tree("myaddon")
+        .root("root", icon, "Title", "Desc", "minecraft:textures/block/stone.png")
+        .advancement("step1", "root", icon, "Step 1", "Do a thing.", "task", 1, 0)
+        .register();                                            // unregister("myaddon") on disable
+}
+FarmersDelightAdvancements.award("myaddon", player, "step1");
+FarmersDelightAdvancements.award(player, "master_chef");        // FD's own tab (no tabId)
+```
+
+Titles/descriptions are client lang keys (resolved from the resource pack) or literal text.
+
+### Recipe queries — `api.recipe.FarmersDelightRecipes` → `RecipeInfo`
+
+Read-only views of FD's own cooking-pot / cutting-board recipes (Bukkit types only):
+
+```java
+for (String id : FarmersDelightRecipes.cookingPotRecipeIds()) {
+    RecipeInfo r = FarmersDelightRecipes.cookingPotRecipe(id);  // ingredients (id strings), results, cookTimeTicks, experience, category, container
+}
+// also: cuttingBoardRecipeIds(), cuttingBoardRecipe(id), matchesCookingPot(...), cookingPotResult(...)
+```
+
+### Recipe discovery — `api.recipe.FarmersDelightRecipeDiscovery` (off by default)
+
+Per-player recipe lock/unlock in the recipe books (enable `recipe-discovery` in FD's config):
+
+```java
+if (FarmersDelightRecipeDiscovery.isEnabled()) {
+    FarmersDelightRecipeDiscovery.unlock(player, "myaddon:type", "recipe_id");
+    boolean known = FarmersDelightRecipeDiscovery.isUnlocked(player,
+        FarmersDelightRecipeDiscovery.TYPE_COOKING_POT, "farmersdelight:beef_stew");
+}
+```
 
 ## Reloading is driven by FarmersDelight
 
@@ -121,7 +214,37 @@ recipes / scheduling / heat / XP). Because CraftEngine's classes keep stable nam
    block and **persists it inside the chunk**. You serialize your state in `saveCustomData(CompoundTag)` and
    restore it in `loadCustomData(CompoundTag)` — that's the whole persistence story. **Do not store block
    state in a side yml**; there's no plugin-managed save/load lifecycle to write. This is exactly how FD's
-   cooking pot / skillet / stove keep their inventories and progress. (FD *does* have a `block_storage.yml`,
-   but that is legacy migration for data written before block entities existed — not the pattern to copy.)
+   cooking pot / skillet / stove keep their inventories and progress.
    To mark a block changed so CraftEngine re-saves it, call `blockEntity.world.blockEntityChanged(pos)`.
    For per-tick logic, override `createBlockEntityTicker(...)` on the controller.
+
+## Debug tooling — plug into `/fd debugtools` — `api.util.DebugToolExtension`
+
+Plug your block into FarmersDelight's debug command (mass-place / mass-activate / status / undo) without
+shipping a CLI of your own. See [`debug/ExampleDebugExtension.java`](src/main/java/com/example/fdaddon/debug/ExampleDebugExtension.java)
+for the wiring; one `DebugToolRegistry.register(...)` call in `onEnable` and admins get:
+
+```
+/fd debugtools place <name> [count] [spacing] [layers]   # mass-place your block
+/fd debugtools activate <name>                            # fill / tick / wake your tracked blocks
+/fd debugtools activate all                               # also triggers every registered extension
+/fd debugtools status                                     # appends your status() lines under the FD snapshot
+/fd debugtools undo                                       # reverts the last batch (your blocks too)
+```
+
+Implement four methods (interface in `com.huidu.farmersdelight.api.util`):
+
+- `name()` — the keyword (e.g. `"example_block"`). Becomes the tab-complete entry.
+- `place(player, origin, count, spacing, layers, undo)` — mass-place your block. **Call `undo.capture(loc)`
+  before each mutation** so `/fd debugtools undo` can revert it. Implementations typically grid as
+  `ceil(sqrt(count))` × `layers`.
+- `activate(player)` (optional) — wake placed blocks (e.g. fill ingredients, start fermentation, bump a
+  counter). Return the count actually transitioned.
+- `status(player)` (optional) — short lines added after FD's TickManager snapshot.
+- `cleanupBeforeUndo(loc)` (optional) — release in-memory tracking + remove block-entity NBT when this
+  location is being undone. Skip cheaply when the location isn't yours.
+
+Registration is safe even on a non-debug FD build (no `-PdebugTools=true`) — the registry is dormant and
+your methods are never called. Plugins with a central manager (e.g. FD's `StoveManager` or BAC's
+`KegManager`) should iterate the manager in `activate` / `cleanupBeforeUndo` rather than duplicate
+tracking; the template's example keeps an in-memory set since the demo block has no manager.

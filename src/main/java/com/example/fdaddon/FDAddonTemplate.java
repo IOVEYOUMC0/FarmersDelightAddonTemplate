@@ -1,23 +1,32 @@
 package com.example.fdaddon;
 
+import com.example.fdaddon.advancement.ExampleAdvancementListener;
+import com.example.fdaddon.advancement.ExampleAdvancements;
+import com.example.fdaddon.debug.ExampleDebugExtension;
+import com.example.fdaddon.listener.ExampleReloadListener;
+import com.example.fdaddon.util.ExampleFoodEffectRegistrar;
 import com.huidu.farmersdelight.api.FarmersDelightApi;
-import com.huidu.farmersdelight.api.event.FarmersDelightReloadEvent;
+import com.huidu.farmersdelight.api.util.DebugToolRegistry;
+import com.huidu.farmersdelight.api.advancement.FarmersDelightAdvancements;
 import com.huidu.farmersdelight.api.item.FarmersDelightItems;
+import com.huidu.farmersdelight.api.recipe.FarmersDelightRecipeDiscovery;
+import com.huidu.farmersdelight.api.recipe.FarmersDelightRecipes;
+import com.huidu.farmersdelight.api.recipe.RecipeInfo;
 import com.huidu.farmersdelight.api.scheduler.ApiTask;
-import net.momirealms.craftengine.bukkit.api.event.CraftEngineReloadEvent;
+import com.huidu.farmersdelight.api.text.FarmersDelightMessages;
+import com.huidu.farmersdelight.api.text.FarmersDelightText;
+import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviors;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.Key;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Example addon for the FarmersDelight (CraftEngine) plugin.
@@ -34,14 +43,28 @@ import java.util.List;
  *       internals, they are renamed by ProGuard).</li>
  * </ol>
  *
- * <p>This class is a tour of every api call. Delete what you don't need.
+ * <p>This class wires together the addon's modules. Look at the dedicated classes for examples of the
+ * common patterns:
+ * <ul>
+ *   <li>{@link ExampleAdvancements} + {@link ExampleAdvancementListener} — advancement tab with a
+ *       simple child and a multiTask challenge, awarded on FD's ProduceEvent + vanilla consume events.</li>
+ *   <li>{@link ExampleReloadListener} — bridges {@code FarmersDelightReloadEvent} and
+ *       {@code CraftEngineReloadEvent} to {@link #reloadAddon} / {@link #registerRecipes}.</li>
+ *   <li>{@link ExampleFoodEffectRegistrar} — config-driven Comfort / Nourishment registration.</li>
+ *   <li>{@link ExampleBlockBehavior} + {@link ExampleBlockEntityController} — a custom block with per-block
+ *       state persisted via a CE block entity.</li>
+ *   <li>{@link ExampleRecipeType} — a custom recipe type with its own book layout.</li>
+ * </ul>
+ *
+ * <p>Delete or rename what you don't need.
  */
-public final class FDAddonTemplate extends JavaPlugin implements Listener {
+public final class FDAddonTemplate extends JavaPlugin {
 
     // Recipe ids you register should be namespaced to your addon so they never clash with other addons.
-    private static final String NS = "fdaddon";
+    public static final String NS = "fdaddon";
 
     private ApiTask heartbeat;
+    private final ExampleFoodEffectRegistrar foodEffects = new ExampleFoodEffectRegistrar();
 
     @Override
     public void onLoad() {
@@ -73,13 +96,28 @@ public final class FDAddonTemplate extends JavaPlugin implements Listener {
         // 2) Cooking-pot / cutting-board recipes load when CraftEngine items are ready. FD itself defers
         //    its recipe load to CraftEngineReloadEvent, so register yours there too (and re-register on
         //    every CE reload). These survive /fd reload (FD keeps externally-registered recipes).
-        getServer().getPluginManager().registerEvents(this, this);
+        //    ExampleReloadListener listens for both FD + CE reload events.
+        getServer().getPluginManager().registerEvents(new ExampleReloadListener(this), this);
 
         // If CraftEngine items are already loaded by the time we enable, register now as well.
         registerRecipes();
 
         // 3) Folia-safe scheduling example: a repeating task. runRepeating returns an ApiTask handle.
         heartbeat = FarmersDelightApi.get().runRepeating(this::heartbeat, 20L, 20L * 60L);
+
+        // 4) Custom food effects: read item-id → duration mappings from config.yml's `food-effects` section
+        //    and register them with FD. Reload-safe — applies again on /fd reload.
+        foodEffects.apply(getConfig().getConfigurationSection("food-effects"));
+
+        // 5) Advancement tab (needs UltimateAdvancementAPI): builds a tree with a root, a simple child,
+        //    and a multiTask challenge. The listener awards them on FD's ProduceEvent + vanilla consume.
+        ExampleAdvancements.register(getLogger());
+        getServer().getPluginManager().registerEvents(new ExampleAdvancementListener(), this);
+
+        // 6) /fd debugtools integration: lets admins mass-place / mass-activate / status / undo this
+        //    addon's blocks through FD's existing debug command. Safe to register even on a non-debug
+        //    FD build (the registry is dormant and the methods are never called).
+        DebugToolRegistry.register(new ExampleDebugExtension(this));
 
         getLogger().info("FDAddonTemplate enabled.");
     }
@@ -94,28 +132,32 @@ public final class FDAddonTemplate extends JavaPlugin implements Listener {
             FarmersDelightApi.get().unregisterRecipeType(NS + ":example");
             FarmersDelightApi.get().unregisterCookingPotRecipe(NS + ":example_stew");
             FarmersDelightApi.get().unregisterCuttingBoardRecipe(NS + ":example_cut");
+            foodEffects.clear();
+            ExampleAdvancements.unregister();
         }
+        DebugToolRegistry.unregister("example_block");
     }
 
-    // ── Reload integration ──────────────────────────────────────────────────────────────────────
-    // FarmersDelight fires this on any `/fd reload <target>`. React by reloading YOUR config so the
-    // whole plugin stays in sync from one command (your addon needs no /reload command of its own).
-    @EventHandler
-    public void onFarmersDelightReload(FarmersDelightReloadEvent event) {
+    /**
+     * Reload everything driven by this addon's config. Called by {@link ExampleReloadListener} on
+     * {@code /fd reload all}. The reason argument is for logging only — split it out if you want
+     * fine-grained reloads (recipes-only vs. effects-only).
+     */
+    public void reloadAddon(String reason) {
         reloadConfig();
-        registerRecipes(); // re-apply your recipes (idempotent; FD coalesces the rebuild)
-        getLogger().info("Reloaded with FarmersDelight (reason: " + event.getReason() + ").");
-    }
-
-    // CraftEngine (re)loaded its items — now item ids resolve, so (re)register item-dependent recipes.
-    @EventHandler
-    public void onCraftEngineReload(CraftEngineReloadEvent event) {
+        foodEffects.apply(getConfig().getConfigurationSection("food-effects"));
         registerRecipes();
+        getLogger().info("Reloaded with FarmersDelight (reason: " + reason + ").");
     }
 
     // ── Recipe registration via the FD API ──────────────────────────────────────────────────────
-    private void registerRecipes() {
+    /**
+     * Register this addon's cooking-pot and cutting-board recipes. Called from {@code onEnable},
+     * {@link #reloadAddon}, and {@link ExampleReloadListener#onCraftEngineReload}.
+     */
+    public void registerRecipes() {
         FarmersDelightApi api = FarmersDelightApi.get();
+        if (!api.isAvailable()) return;
 
         // Cooking-pot recipe: ingredient specs use FD's recipe syntax — "ns:id", "#ns:tag", or "a|b"
         // choices. `container` is the required bowl/bottle (null = none). `result` carries its own amount.
@@ -181,6 +223,54 @@ public final class FDAddonTemplate extends JavaPlugin implements Listener {
         String id = FarmersDelightItems.idOf(stack);                 // "ns:id" (custom) or "minecraft:<material>"
         boolean isCarrot = FarmersDelightItems.matchesId(stack, "minecraft:carrot");
         boolean isLog = FarmersDelightItems.matchesTag(stack, "minecraft:logs");
-        getLogger().fine(id + " carrot=" + isCarrot + " log=" + isLog);
+        boolean custom = FarmersDelightItems.isCustomItem(stack);    // true for a CraftEngine custom item
+        String customId = FarmersDelightItems.customIdOf(stack);     // custom id, or null for vanilla
+        ItemStack remainder = FarmersDelightItems.craftingRemainderOf(stack); // e.g. bucket from a milk bucket
+        getLogger().fine(id + " carrot=" + isCarrot + " log=" + isLog + " custom=" + custom
+                + " customId=" + customId + " remainder=" + remainder);
+    }
+
+    /** Read-only recipe queries: list FD's cooking-pot / cutting-board recipes and inspect one as a RecipeInfo. */
+    public void recipeQueries() {
+        for (String id : FarmersDelightRecipes.cookingPotRecipeIds()) {
+            RecipeInfo info = FarmersDelightRecipes.cookingPotRecipe(id);
+            if (info != null) {
+                getLogger().fine(id + " ingredients=" + info.ingredients() + " results=" + info.results()
+                        + " time=" + info.cookTimeTicks() + " xp=" + info.experience());
+            }
+        }
+    }
+
+    /** Rich text + player messages: render templates with {key} placeholders, <l10n:key>/<lang:key> tags
+     * (per-viewer locale), CraftEngine <image:ns:id>/<shift:N> glyphs, and MiniMessage + legacy colors. */
+    public void textAndMessages(Player player) {
+        FarmersDelightMessages.send(player, "<green>Hello {name}!", Map.of("name", player.getName()));
+        FarmersDelightMessages.actionBar(player, "<gold>Saved");
+        FarmersDelightMessages.title(player, "<aqua>Title", "<gray>Subtitle", 10, 40, 10, Map.of());
+        Component rendered = FarmersDelightText.render("<yellow>x{n}", player, Map.of("n", "3"));
+        // Build a GUI icon with a rendered name + lore (shares FD's rendering: l10n tags, glyphs, colors):
+        ItemStack icon = FarmersDelightItems.buildIcon("minecraft:apple", "<gold>Shiny Apple",
+                List.of("<gray>Line one", "<gray>Line two"), player, Map.of());
+        getLogger().fine("rendered=" + rendered + " icon=" + icon);
+    }
+
+    /** Recipe discovery (lock/unlock; off by default): unlock a recipe for a player or check its state. */
+    public void recipeDiscovery(Player player) {
+        if (FarmersDelightRecipeDiscovery.isEnabled()) {
+            FarmersDelightRecipeDiscovery.unlock(player, NS + ":example", "example");
+            boolean known = FarmersDelightRecipeDiscovery.isUnlocked(player,
+                    FarmersDelightRecipeDiscovery.TYPE_COOKING_POT, "farmersdelight:beef_stew");
+            getLogger().fine("beef_stew unlocked=" + known);
+        }
+    }
+
+    /** Advancements: grant / check on your addon tab. The {@link ExampleAdvancements} helper wraps the
+     * tab-id boilerplate; the listener handles automatic awarding on player actions. */
+    public void advancements(Player player) {
+        ExampleAdvancements.award(player, ExampleAdvancements.FIRST_STEW);
+        boolean done = ExampleAdvancements.has(player, ExampleAdvancements.FIRST_STEW);
+        // For FD's own tab (not your addon's): FarmersDelightAdvancements.award(player, "master_chef").
+        FarmersDelightAdvancements.award(player, "master_chef");
+        getLogger().fine("first_stew=" + done);
     }
 }

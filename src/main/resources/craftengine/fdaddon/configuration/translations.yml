@@ -2,6 +2,18 @@ translations:
   en_us:
     item.fdaddon.example_jerky: "Example Jerky"
     block.fdaddon.example_block: "Example Block"
+    fdaddon.advancement.root: "FD Addon Template"
+    fdaddon.advancement.root.desc: "An example advancement tab from the FD addon template."
+    fdaddon.advancement.first_stew: "First Stew"
+    fdaddon.advancement.first_stew.desc: "Cook a Rabbit Stew in a cooking pot."
+    fdaddon.advancement.sampler_platter: "Sampler Platter"
+    fdaddon.advancement.sampler_platter.desc: "Taste rabbit stew, beetroot soup, and mushroom stew."
   zh_cn:
     item.fdaddon.example_jerky: "示例肉干"
     block.fdaddon.example_block: "示例方块"
+    fdaddon.advancement.root: "FD 附属模板"
+    fdaddon.advancement.root.desc: "来自 FD 附属模板的示例成就 tab。"
+    fdaddon.advancement.first_stew: "第一锅炖菜"
+    fdaddon.advancement.first_stew.desc: "在烹饪锅里煮一份兔肉煲。"
+    fdaddon.advancement.sampler_platter: "试吃拼盘"
+    fdaddon.advancement.sampler_platter.desc: "尝遍兔肉煲、甜菜汤和蘑菇煲。"
