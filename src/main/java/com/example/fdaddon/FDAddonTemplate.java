@@ -2,11 +2,19 @@ package com.example.fdaddon;
 
 import com.example.fdaddon.advancement.ExampleAdvancementListener;
 import com.example.fdaddon.advancement.ExampleAdvancements;
+import com.example.fdaddon.buff.ExampleBuffBossbar;
+import com.example.fdaddon.buff.ExampleCustomBuff;
 import com.example.fdaddon.debug.ExampleDebugExtension;
+import com.example.fdaddon.display.ExampleItemDisplayManager;
+import com.example.fdaddon.listener.ExampleFarmersDelightEventsListener;
 import com.example.fdaddon.listener.ExampleReloadListener;
+import com.example.fdaddon.recipe.ExampleRecipeFiller;
 import com.example.fdaddon.util.ExampleFoodEffectRegistrar;
+import com.example.fdaddon.util.ExampleTooltipCustomizer;
 import com.huidu.farmersdelight.api.FarmersDelightApi;
+import com.huidu.farmersdelight.api.buff.CustomBuffRegistry;
 import com.huidu.farmersdelight.api.util.DebugToolRegistry;
+import com.huidu.farmersdelight.api.util.PluginManagerGuard;
 import com.huidu.farmersdelight.api.advancement.FarmersDelightAdvancements;
 import com.huidu.farmersdelight.api.item.FarmersDelightItems;
 import com.huidu.farmersdelight.api.recipe.FarmersDelightRecipeDiscovery;
@@ -65,6 +73,10 @@ public final class FDAddonTemplate extends JavaPlugin {
 
     private ApiTask heartbeat;
     private final ExampleFoodEffectRegistrar foodEffects = new ExampleFoodEffectRegistrar();
+    private final ExampleCustomBuff exampleBuff = new ExampleCustomBuff();
+    private final ExampleItemDisplayManager displays = new ExampleItemDisplayManager();
+    private ExampleBuffBossbar buffBossbar;
+    private ApiTask buffBossbarTask;
 
     @Override
     public void onLoad() {
@@ -119,6 +131,26 @@ public final class FDAddonTemplate extends JavaPlugin {
         //    FD build (the registry is dormant and the methods are never called).
         DebugToolRegistry.register(new ExampleDebugExtension(this));
 
+        // 7) Custom buff + boss bar: register a persistent addon buff so FD's milk-cure listener and its
+        //    join/quit persistence lifecycle drive it, then push its readout to FD's boss-bar channel each
+        //    tick. FD owns the master boss-bar toggle/layout in its config; the addon only pushes state.
+        CustomBuffRegistry.register(exampleBuff);
+        buffBossbar = new ExampleBuffBossbar(this, exampleBuff);
+        buffBossbarTask = FarmersDelightApi.get().runRepeating(buffBossbar::tick, 20L, 10L);
+
+        // 8) Packet item displays: floating items rendered to nearby players with no real entity. The manager
+        //    also listens for /fd cleanup so its displays are not swept as orphans, so register it as a listener.
+        getServer().getPluginManager().registerEvents(displays, this);
+
+        // 9) FarmersDelight lifecycle event bridges: cleanup / migrate / warmup / cooking-experience.
+        getServer().getPluginManager().registerEvents(
+                new ExampleFarmersDelightEventsListener(getLogger()), this);
+
+        // 10) Guard against a live plugin-manager reload/unload (PlugMan and friends), which leaves
+        //     CraftEngine-bound lambdas throwing after the classloader goes away. FD's guard cancels the
+        //     destructive command and tells the sender to /stop instead. Pass your plugin name.
+        getServer().getPluginManager().registerEvents(new PluginManagerGuard(getName()), this);
+
         getLogger().info("FDAddonTemplate enabled.");
     }
 
@@ -127,11 +159,16 @@ public final class FDAddonTemplate extends JavaPlugin {
         if (heartbeat != null) {
             heartbeat.cancel();
         }
+        if (buffBossbarTask != null) {
+            buffBossbarTask.cancel();
+        }
         if (FarmersDelightApi.get().isAvailable()) {
             // Clean up what you registered.
             FarmersDelightApi.get().unregisterRecipeType(NS + ":example");
             FarmersDelightApi.get().unregisterCookingPotRecipe(NS + ":example_stew");
             FarmersDelightApi.get().unregisterCuttingBoardRecipe(NS + ":example_cut");
+            CustomBuffRegistry.unregister(exampleBuff);
+            displays.hideAll();
             foodEffects.clear();
             ExampleAdvancements.unregister();
         }
@@ -194,8 +231,9 @@ public final class FDAddonTemplate extends JavaPlugin {
     /** Open the recipe book for a player (e.g. from your own block/GUI). */
     public void showRecipes(Player player) {
         // Independent book: opens straight to YOUR type using the layouts ExampleRecipeType provides — never
-        // a shared category menu with other addons. Pass a RecipeFiller to add a "Fill" button.
-        FarmersDelightApi.get().openRecipeBook(player, NS + ":example", null);
+        // a shared category menu with other addons. The RecipeFiller adds a "Fill" button; construct a fresh
+        // one per open, bound to the station the book was opened from, so Fill/back target that station.
+        FarmersDelightApi.get().openRecipeBook(player, NS + ":example", new ExampleRecipeFiller());
         // Alternatives:
         //   openRecipeBook(player)                 -> FD's shared book, read-only (all registered types).
         //   openRecipeBook(player, filler)         -> shared book with a Fill button.
@@ -272,5 +310,28 @@ public final class FDAddonTemplate extends JavaPlugin {
         // For FD's own tab (not your addon's): FarmersDelightAdvancements.award(player, "master_chef").
         FarmersDelightAdvancements.award(player, "master_chef");
         getLogger().fine("first_stew=" + done);
+    }
+
+    /** Apply the example custom buff (level 1, 60s). FD's boss-bar feed renders it while it is active; FD's
+     * milk-bottle cure can clear it, and it survives a rejoin via the buff's saveState/restoreState. */
+    public void giveExampleBuff(Player player) {
+        // Direct call, or generically by id: CustomBuffRegistry.apply(player, ExampleCustomBuff.ID, 1, 60).
+        exampleBuff.apply(player, 1, 60);
+    }
+
+    /** Show a floating item at a location via FD's packet display API (no real entity is spawned). */
+    public void showFloatingItem(Location where, ItemStack item) {
+        if (where.getWorld() == null) {
+            return;
+        }
+        String anchor = where.getWorld().getUID() + ";" + where.getBlockX() + ";"
+                + where.getBlockY() + ";" + where.getBlockZ();
+        displays.show(anchor, where, item);
+        // Later: displays.update(anchor, movedLocation, item) to move it, displays.hide(anchor) to remove it.
+    }
+
+    /** Encode a fill level into a CraftEngine item's damage bar and hide the numeric durability line. */
+    public ItemStack asFluidMeter(ItemStack craftEngineItem, int capacityMb, int amountMb) {
+        return ExampleTooltipCustomizer.encodeAsMeter(craftEngineItem, capacityMb, amountMb);
     }
 }

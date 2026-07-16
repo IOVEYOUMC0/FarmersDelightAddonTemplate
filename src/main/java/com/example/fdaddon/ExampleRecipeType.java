@@ -1,7 +1,10 @@
 package com.example.fdaddon;
 
+import com.example.fdaddon.recipe.ExampleRecipeEditor;
 import com.huidu.farmersdelight.api.item.FarmersDelightItems;
+import com.huidu.farmersdelight.api.recipe.JumpTarget;
 import com.huidu.farmersdelight.api.recipe.RecipeBookLayout;
+import com.huidu.farmersdelight.api.recipe.RecipeEditor;
 import com.huidu.farmersdelight.api.recipe.RecipeType;
 import com.huidu.farmersdelight.api.recipe.ViewableRecipe;
 import net.kyori.adventure.text.Component;
@@ -31,6 +34,9 @@ import java.util.Map;
  */
 public final class ExampleRecipeType implements RecipeType {
 
+    // A single stable editor instance so its in-memory drafts persist across editor opens.
+    private final ExampleRecipeEditor editor = new ExampleRecipeEditor();
+
     @Override
     public String id() {
         return "fdaddon:example";
@@ -51,6 +57,13 @@ public final class ExampleRecipeType implements RecipeType {
     public List<ViewableRecipe> recipes() {
         // Build these from your own data/config. One hard-coded example shown here.
         return List.of(new ExampleViewableRecipe());
+    }
+
+    @Override
+    public RecipeEditor editor() {
+        // Returning an editor makes this type editable in-game through FarmersDelight's generic recipe
+        // editor GUI. Return null (the default) for a read-only type.
+        return editor;
     }
 
     // ── Optional: give this type its OWN independent recipe book ─────────────────────────────────
@@ -129,6 +142,14 @@ public final class ExampleRecipeType implements RecipeType {
             // get filled with them. Use this for things the flat inputs/result can't express (e.g. the keg
             // addon uses "fluid"/"return" roles for its fermenting recipes).
             return Map.of("tool", List.of(FarmersDelightItems.create("minecraft:wooden_axe")));
+        }
+
+        @Override
+        public Map<String, JumpTarget> jumpTargets() {
+            // Make the 'tool' detail slot clickable: clicking it opens another recipe's detail page. A real
+            // addon points this at the recipe that PRODUCES that item; here it self-references for the demo.
+            // A role absent from this map (the default empty map) is simply not clickable.
+            return Map.of("tool", new JumpTarget("fdaddon:example", "example_stew"));
         }
     }
 
