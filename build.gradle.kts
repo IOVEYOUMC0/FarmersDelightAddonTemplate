@@ -15,12 +15,12 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     compileOnly("org.jetbrains:annotations:26.1.0")
 
     // CraftEngine — your addon talks to CE for custom items/blocks/recipes at runtime.
-    compileOnly("net.momirealms:craft-engine-core:26.5.3")
-    compileOnly("net.momirealms:craft-engine-bukkit:26.5.3")
+    compileOnly("net.momirealms:craft-engine-core:26.7")
+    compileOnly("net.momirealms:craft-engine-bukkit:26.7")
 
     // FarmersDelight — the ONLY thing you may reference is its obfuscation-safe `api.**` facade.
     // FD's internals are repackaged/renamed by ProGuard; only `com.huidu.farmersdelight.api.**` keeps
