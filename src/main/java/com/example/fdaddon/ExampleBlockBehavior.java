@@ -20,17 +20,15 @@ import org.bukkit.entity.Player;
  * Custom-block logic, registered straight into CraftEngine (NOT via FarmersDelight — block/item/recipe
  * definition is CraftEngine's job; FD bridges only gameplay services like cooking-pot recipes & scheduling).
  *
- * <p>Two halves:
- * <ul>
- *   <li>This {@code BlockBehavior} is a SINGLETON shared by every placed block of this id. It holds no
- *       per-block state — it only reacts to interactions and routes to the right block entity.</li>
- *   <li>Per-block state lives in {@link ExampleBlockEntityController}, one per placed block, persisted by
- *       CraftEngine inside the chunk. Implementing {@link EntityBlock} is all it takes for CraftEngine to
- *       create + save/load that controller automatically (no block-entity declaration in blocks.yml).</li>
- * </ul>
+ * Two halves:
+ * - This BlockBehavior is a SINGLETON shared by every placed block of this id. It holds no
+ *       per-block state — it only reacts to interactions and routes to the right block entity.
+ * - Per-block state lives in ExampleBlockEntityController, one per placed block, persisted by
+ *       CraftEngine inside the chunk. Implementing EntityBlock is all it takes for CraftEngine to
+ *       create + save/load that controller automatically (no block-entity declaration in blocks.yml).
  *
- * <p>CraftEngine's classes are a STABLE, non-obfuscated API (it's a separate plugin), so importing
- * {@code net.momirealms.craftengine.**} directly is fine — unlike FarmersDelight internals.
+ * CraftEngine's classes are a STABLE, non-obfuscated API (it's a separate plugin), so importing
+ * net.momirealms.craftengine.** directly is fine — unlike FarmersDelight internals.
  */
 public final class ExampleBlockBehavior extends BlockBehavior implements EntityBlock {
 

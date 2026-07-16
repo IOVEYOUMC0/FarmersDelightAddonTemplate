@@ -9,13 +9,12 @@ import java.util.Set;
 
 /**
  * Config-driven registration of FarmersDelight's Comfort + Nourishment food effects. Reads two lists from
- * a config section and registers each {@code item-id} → {@code duration-ticks} mapping with FD.
+ * a config section and registers each item-id → duration-ticks mapping with FD.
  *
- * <p>Reload-safe: {@link #apply(ConfigurationSection)} unregisters whatever it previously registered, so
+ * Reload-safe: apply(ConfigurationSection) unregisters whatever it previously registered, so
  * calling it again after the user edits config never leaves stale entries.
  *
- * <p>Expected config shape (under your plugin's config.yml):
- * <pre>
+ * Expected config shape (under your plugin's config.yml):
  * food-effects:
  *   comfort:
  *     - id: "minecraft:golden_apple"
@@ -23,9 +22,8 @@ import java.util.Set;
  *   nourishment:
  *     - id: "minecraft:cooked_beef"
  *       duration: 300
- * </pre>
  *
- * <p>Mirrors the production pattern in BrewinAndChewin's {@code FoodEffectRegistrar}.
+ * Mirrors the production pattern in BrewinAndChewin's FoodEffectRegistrar.
  */
 public final class ExampleFoodEffectRegistrar {
 
@@ -33,7 +31,7 @@ public final class ExampleFoodEffectRegistrar {
     private final Set<String> registeredNourishment = new HashSet<>();
 
     /**
-     * Apply a fresh set of registrations from {@code section}. Previously registered effects are removed
+     * Apply a fresh set of registrations from section. Previously registered effects are removed
      * first; pass a null/empty section to clear everything.
      */
     public void apply(ConfigurationSection section) {

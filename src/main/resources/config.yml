@@ -1,7 +1,9 @@
 # Example addon configuration. Edit and run /fd reload all to apply.
 
-# Item-id -> duration-ticks mappings for FarmersDelight's food effects.
-# Comfort: bumps the player's nourishment briefly when eaten. Nourishment: longer/stronger variant.
+# Item-id -> duration (in seconds) mappings for FarmersDelight's food effects.
+# Comfort: heals 1 HP on an interval while the player's saturation is 0 (slow regen while unsaturated).
+# Nourishment: zeroes the player's exhaustion, suppressing hunger drain. (Comfort and Nourishment are
+# distinct effects, not weaker/stronger versions of each other.)
 # Loaded by ExampleFoodEffectRegistrar; cleared and re-applied on /fd reload.
 food-effects:
   comfort:

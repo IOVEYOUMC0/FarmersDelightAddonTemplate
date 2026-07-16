@@ -2,6 +2,7 @@ translations:
   en_us:
     item.fdaddon.example_jerky: "Example Jerky"
     block.fdaddon.example_block: "Example Block"
+    buff.fdaddon.example: "Example Buff"
     fdaddon.advancement.root: "FD Addon Template"
     fdaddon.advancement.root.desc: "An example advancement tab from the FD addon template."
     fdaddon.advancement.first_stew: "First Stew"
@@ -11,6 +12,7 @@ translations:
   zh_cn:
     item.fdaddon.example_jerky: "示例肉干"
     block.fdaddon.example_block: "示例方块"
+    buff.fdaddon.example: "示例增益"
     fdaddon.advancement.root: "FD 附属模板"
     fdaddon.advancement.root.desc: "来自 FD 附属模板的示例成就 tab。"
     fdaddon.advancement.first_stew: "第一锅炖菜"

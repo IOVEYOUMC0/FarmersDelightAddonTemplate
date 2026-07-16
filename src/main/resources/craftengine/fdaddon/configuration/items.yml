@@ -39,7 +39,7 @@ items:
   # ── Override a VANILLA item to add a behavior (e.g. make it place a block) ────────────────
   # CraftEngine can attach behaviors to vanilla items by keying the entry with a minecraft: id.
   # `ground_block_item` makes the item place a (food) block on right-click — how FD pies work.
-  # fdaddon:example_block:
+  # fdaddon:example_pie:
   #   material: pumpkin_pie
   #   behavior:
   #     type: ground_block_item

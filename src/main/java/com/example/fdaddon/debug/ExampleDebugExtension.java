@@ -23,18 +23,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Plugs this addon into FarmersDelight's {@code /fd debugtools} command — so admins can stress-test
+ * Plugs this addon into FarmersDelight's /fd debugtools command — so admins can stress-test
  * the addon's custom block (mass-place, mass-activate, status, undo) without the addon needing to
  * ship a CLI of its own.
  *
- * <p>Register one instance in {@code onEnable()} via
- * {@link com.huidu.farmersdelight.api.util.DebugToolRegistry#register}. The registration is safe even
- * when FD is built without {@code -PdebugTools=true}: the registry is dormant and these methods are
+ * Register one instance in onEnable() via
+ * com.huidu.farmersdelight.api.util.DebugToolRegistry.register. The registration is safe even
+ * when FD is built without -PdebugTools=true: the registry is dormant and these methods are
  * never called.
  *
- * <p>This example keeps its own in-memory set of placed locations because the demo block has no
- * central manager. Plugins with a manager (e.g. BAC's {@code KegManager}) should iterate the manager
- * directly in {@link #activate} / {@link #cleanupBeforeUndo} instead of duplicating tracking.
+ * This example keeps its own in-memory set of placed locations because the demo block has no
+ * central manager. Plugins with a manager (e.g. BAC's KegManager) should iterate the manager
+ * directly in activate / cleanupBeforeUndo instead of duplicating tracking.
  */
 public final class ExampleDebugExtension implements DebugToolExtension {
 
@@ -102,16 +102,17 @@ public final class ExampleDebugExtension implements DebugToolExtension {
         if (ceWorld == null) return 0;
 
         int activated = 0;
-        // Snapshot before iterating: activate could span many ticks on Folia regions.
+        // Defensive copy: iterate over a snapshot so a concurrent place() on the player thread
+        // can't cause a ConcurrentModificationException while we walk the placed set.
         for (Location loc : new ArrayList<>(placed)) {
             if (loc.getWorld() == null || !loc.getWorld().equals(player.getWorld())) continue;
             BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(
                     new BlockPos(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
             if (blockEntity == null) continue;
             int[] count = {0};
+            // A single-controller EntityBlock always gets controller id 0, so 0 is correct here.
             blockEntity.controller.let(ExampleBlockEntityController.class, 0,
-                    (java.util.function.Consumer<ExampleBlockEntityController>)
-                            controller -> { count[0] = controller.increment(); });
+                    controller -> { count[0] = controller.increment(); });
             if (count[0] > 0) activated++;
         }
         return activated;

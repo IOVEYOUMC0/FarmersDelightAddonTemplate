@@ -11,11 +11,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * Copies this addon's bundled CraftEngine resources (everything under {@code craftengine/<namespace>/} in
- * the jar) into {@code plugins/CraftEngine/resources/<namespace>/} on load. Install-if-missing: existing
+ * Copies this addon's bundled CraftEngine resources (everything under craftengine/<namespace>/ in
+ * the jar) into plugins/CraftEngine/resources/<namespace>/ on load. Install-if-missing: existing
  * files are left untouched so server owners can edit them. No-ops on an exploded/IDE run (no jar to scan).
  *
- * <p>Change {@code RESOURCE_PREFIX}/{@code TARGET} to your namespace.
+ * Change RESOURCE_PREFIX/TARGET to your namespace.
  */
 public final class AddonResources {
 

@@ -1,6 +1,5 @@
 package com.example.fdaddon.advancement;
 
-import com.huidu.farmersdelight.api.advancement.AdvancementTree;
 import com.huidu.farmersdelight.api.advancement.FarmersDelightAdvancements;
 import com.huidu.farmersdelight.api.item.FarmersDelightItems;
 import org.bukkit.Material;
@@ -12,18 +11,16 @@ import java.util.logging.Logger;
 
 /**
  * Builds and exposes this addon's advancement tab. Demonstrates the three patterns most addons need:
- *   <ul>
- *     <li>A root advancement (always required).</li>
- *     <li>A simple child advancement awarded by one action.</li>
- *     <li>A {@link AdvancementTree#multiTask multiTask} advancement that completes when every named
- *         criterion is granted — used for "do all N of these" challenges.</li>
- *   </ul>
+ *   - A root advancement (always required).
+ *   - A simple child advancement awarded by one action.
+ *   - A multiTask advancement that completes when every named
+ *         criterion is granted — used for "do all N of these" challenges.
  *
- * <p>Translation keys: titles/descriptions are resolved from the client's resource pack via
- * {@code <tab-id>.advancement.<id>} and {@code <tab-id>.advancement.<id>.desc}. Add matching entries to your
+ * Translation keys: titles/descriptions are resolved from the client's resource pack via
+ * <tab-id>.advancement.<id> and <tab-id>.advancement.<id>.desc. Add matching entries to your
  * lang file or the keys will render verbatim.
  *
- * <p>Requires {@code UltimateAdvancementAPI}. All calls go through {@link FarmersDelightAdvancements} so
+ * Requires UltimateAdvancementAPI. All calls go through FarmersDelightAdvancements so
  * they are no-ops when UAA is missing.
  */
 public final class ExampleAdvancements {
@@ -46,7 +43,7 @@ public final class ExampleAdvancements {
     }
 
     /**
-     * Builds the tab and registers it with FarmersDelight. Call from {@code onEnable} after FD is ready.
+     * Builds the tab and registers it with FarmersDelight. Call from onEnable after FD is ready.
      * Returns false if UAA is missing — that's a normal soft-dep no-op, not an error.
      */
     public static boolean register(Logger log) {
@@ -75,7 +72,7 @@ public final class ExampleAdvancements {
         return ok;
     }
 
-    /** Unregister the tab. Call from {@code onDisable}. */
+    /** Unregister the tab. Call from onDisable. */
     public static void unregister() {
         FarmersDelightAdvancements.unregister(TAB_ID);
     }
@@ -94,7 +91,7 @@ public final class ExampleAdvancements {
         return FarmersDelightAdvancements.has(TAB_ID, player, advancementId);
     }
 
-    /** Build an icon, falling back to a vanilla {@link Material} if the CraftEngine item id won't resolve. */
+    /** Build an icon, falling back to a vanilla Material if the CraftEngine item id won't resolve. */
     private static ItemStack icon(String ceId, Material fallback) {
         ItemStack stack = ceId == null ? null : FarmersDelightItems.create(ceId);
         return stack != null && !stack.getType().isAir() ? stack : new ItemStack(fallback);

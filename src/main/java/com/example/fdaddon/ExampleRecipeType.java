@@ -15,22 +15,21 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * A {@link RecipeType} so this addon's recipes show in a recipe book. A RecipeType is just a titled, icon'd
- * list of {@link ViewableRecipe}s.
+ * A RecipeType so this addon's recipes show in a recipe book. A RecipeType is just a titled, icon'd
+ * list of ViewableRecipes.
  *
- * <p>Two ways to render it:
- * <ul>
- *   <li><b>Shared book</b> (do nothing extra): FD shows your type in its generic {@code recipe-book-gui}.
- *       Simple, but if several addons register types they share one category menu.</li>
- *   <li><b>Independent book</b> (override {@link #listLayout()}/{@link #detailLayout()}): you supply your
+ * Two ways to render it:
+ * - Shared book (do nothing extra): FD shows your type in its generic recipe-book-gui.
+ *       Simple, but if several addons register types they share one category menu.
+ * - Independent book (override listLayout()/detailLayout()): you supply your
  *       OWN page layout (title, grid, decorations) and FD renders an independent book just for your type —
- *       open it with {@code openRecipeBook(player, "fdaddon:example", filler)}. This example does that.</li>
- * </ul>
- * For an editable type, also override {@code editor()} (see api.recipe.RecipeEditor).
+ *       open it with openRecipeBook(player, "fdaddon:example", filler). This example does that.
+ * For an editable type, also override editor() (see api.recipe.RecipeEditor).
  */
 public final class ExampleRecipeType implements RecipeType {
 
@@ -50,7 +49,8 @@ public final class ExampleRecipeType implements RecipeType {
     @Override
     public ItemStack icon() {
         // Any ItemStack works (vanilla or a CraftEngine custom item via FarmersDelightItems.create).
-        return FarmersDelightItems.create("minecraft:rabbit_stew");
+        ItemStack icon = FarmersDelightItems.create("minecraft:rabbit_stew");
+        return icon != null ? icon : new ItemStack(Material.RABBIT_STEW);
     }
 
     @Override
@@ -119,10 +119,14 @@ public final class ExampleRecipeType implements RecipeType {
 
         @Override
         public List<ItemStack> inputs() {
-            return List.of(
-                    FarmersDelightItems.create("minecraft:carrot"),
-                    FarmersDelightItems.create("minecraft:potato"),
-                    FarmersDelightItems.create("minecraft:bowl"));
+            List<ItemStack> items = new ArrayList<>();
+            ItemStack carrot = FarmersDelightItems.create("minecraft:carrot");
+            if (carrot != null) items.add(carrot);
+            ItemStack potato = FarmersDelightItems.create("minecraft:potato");
+            if (potato != null) items.add(potato);
+            ItemStack bowl = FarmersDelightItems.create("minecraft:bowl");
+            if (bowl != null) items.add(bowl);
+            return items;
         }
 
         @Override
@@ -155,7 +159,7 @@ public final class ExampleRecipeType implements RecipeType {
 
     // ── Tiny helpers to build decoration/button items (a real addon would read these from its gui.yml) ──
 
-    /** A plain data {@link RecipeBookLayout}; FD's default methods derive slot lookups from layout+legend. */
+    /** A plain data RecipeBookLayout; FD's default methods derive slot lookups from layout+legend. */
     private record Layout(Component title, int rows, List<String> layout,
                           Map<Character, String> legend, Map<String, ItemStack> decorations)
             implements RecipeBookLayout {

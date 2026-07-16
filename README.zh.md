@@ -102,17 +102,20 @@ boolean has = FarmersDelightFoodEffects.hasNourishment(player);
 ```
 
 如果要映射多于几个食物，**别**在 Java 里硬编码 id 列表，把映射放到自己的 `config.yml` 里——管理员可调，
-你的 reload 监听器自然能拾起，模式对任意附属都通用。参考
-`BrewinAndChewin/src/main/java/com/huidu/brewinandchewin/util/FoodEffectRegistrar.java`（约 50 行可直接抄）：
-插件持一个实例，在 onEnable + reload 调 `apply(getConfig().getConfigurationSection("food-effects"))`，
-onDisable 调 `clear()`。配置形状：
+你的 reload 监听器自然能拾起，模式对任意附属都通用。模板自带这个辅助类：
+[`util/ExampleFoodEffectRegistrar`](src/main/java/com/example/fdaddon/util/ExampleFoodEffectRegistrar.java)
+（对应 BrewinAndChewin 生产环境的 `FoodEffectRegistrar`）——插件持一个实例，在 onEnable + reload 调
+`apply(getConfig().getConfigurationSection("food-effects"))`，onDisable 调 `clear()`。它把每个效果键解析成
+一个 `id`/`duration` **列表**（时长单位为**秒**），与随模板发布的 `config.yml` 一致：
 
 ```yaml
 food-effects:
-  nourishment:
-    "myaddon:hearty_stew": 300   # 秒
   comfort:
-    "myaddon:warm_tea": 60
+    - id: "myaddon:warm_tea"
+      duration: 60      # 秒
+  nourishment:
+    - id: "myaddon:hearty_stew"
+      duration: 300     # 秒
 ```
 
 ### 成就 —— `api.advancement.FarmersDelightAdvancements`（+ `AdvancementTree`）

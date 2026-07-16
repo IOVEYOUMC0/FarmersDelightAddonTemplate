@@ -67,6 +67,9 @@ public final class ExampleItemDisplayManager implements Listener {
     public void hide(String anchor) {
         Integer handle = handles.remove(anchor);
         if (handle != null) {
+            if (!FarmersDelightApi.get().isAvailable()) {
+                return;
+            }
             FarmersDelightApi.get().removeItemDisplay(handle);
         }
     }
@@ -74,6 +77,10 @@ public final class ExampleItemDisplayManager implements Listener {
     /** Remove every display this manager created (e.g. on disable). */
     public void hideAll() {
         FarmersDelightApi api = FarmersDelightApi.get();
+        if (!api.isAvailable()) {
+            handles.clear();
+            return;
+        }
         for (Integer handle : handles.values()) {
             api.removeItemDisplay(handle);
         }

@@ -11,8 +11,9 @@ import org.bukkit.inventory.ItemStack;
  * still renders, showing the fill, but the raw number is not leaked into the tooltip.
  *
  * The pattern: wrap the Bukkit stack in CraftEngine's live item wrapper, set max-damage and damage to encode
- * your value, then hide the line. The wrapper mutates the same underlying stack, so the returned stack
- * carries the changes. Only call this when CraftEngine is present, since it uses CraftEngine's item wrapper.
+ * your value, then hide the line. For a CraftEngine (custom) item — the intended input — the wrapper mutates
+ * the same underlying stack, so the returned stack reflects the change; for a plain Bukkit stack the wrapper
+ * copies and the mutation is lost. Only call this when CraftEngine is present, since it uses CraftEngine's item wrapper.
  */
 public final class ExampleTooltipCustomizer {
 

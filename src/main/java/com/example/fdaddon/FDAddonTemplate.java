@@ -39,32 +39,28 @@ import java.util.Map;
 /**
  * Example addon for the FarmersDelight (CraftEngine) plugin.
  *
- * <p>Architecture, in three sentences:
- * <ol>
- *   <li>CraftEngine defines your custom items/blocks/recipes from YAML (resources under
- *       {@code craftengine/<namespace>/}); this addon bundles them and {@link AddonResources releases}
- *       them into CraftEngine's resource folder on first load.</li>
- *   <li>FarmersDelight exposes an obfuscation-safe facade, {@link FarmersDelightApi}, for the things CE
+ * Architecture, in three sentences:
+ *   - CraftEngine defines your custom items/blocks/recipes from YAML (resources under
+ *       craftengine/<namespace>/); this addon bundles them and releases
+ *       them into CraftEngine's resource folder on first load.
+ *   - FarmersDelight exposes an obfuscation-safe facade, FarmersDelightApi, for the things CE
  *       can't do alone — registering cooking-pot / cutting-board recipes, showing recipes in FD's recipe
- *       book, Folia-safe scheduling, heat-source queries, and crafting XP.</li>
- *   <li>You write the gameplay glue in Java against {@code api.**} ONLY (see README — never touch FD
- *       internals, they are renamed by ProGuard).</li>
- * </ol>
+ *       book, Folia-safe scheduling, heat-source queries, and crafting XP.
+ *   - You write the gameplay glue in Java against api.** ONLY (see README — never touch FD
+ *       internals, they are renamed by ProGuard).
  *
- * <p>This class wires together the addon's modules. Look at the dedicated classes for examples of the
+ * This class wires together the addon's modules. Look at the dedicated classes for examples of the
  * common patterns:
- * <ul>
- *   <li>{@link ExampleAdvancements} + {@link ExampleAdvancementListener} — advancement tab with a
- *       simple child and a multiTask challenge, awarded on FD's ProduceEvent + vanilla consume events.</li>
- *   <li>{@link ExampleReloadListener} — bridges {@code FarmersDelightReloadEvent} and
- *       {@code CraftEngineReloadEvent} to {@link #reloadAddon} / {@link #registerRecipes}.</li>
- *   <li>{@link ExampleFoodEffectRegistrar} — config-driven Comfort / Nourishment registration.</li>
- *   <li>{@link ExampleBlockBehavior} + {@link ExampleBlockEntityController} — a custom block with per-block
- *       state persisted via a CE block entity.</li>
- *   <li>{@link ExampleRecipeType} — a custom recipe type with its own book layout.</li>
- * </ul>
+ *   - ExampleAdvancements + ExampleAdvancementListener — advancement tab with a
+ *       simple child and a multiTask challenge, awarded on FD's ProduceEvent + vanilla consume events.
+ *   - ExampleReloadListener — bridges FarmersDelightReloadEvent and
+ *       CraftEngineReloadEvent to reloadAddon / registerRecipes.
+ *   - ExampleFoodEffectRegistrar — config-driven Comfort / Nourishment registration.
+ *   - ExampleBlockBehavior + ExampleBlockEntityController — a custom block with per-block
+ *       state persisted via a CE block entity.
+ *   - ExampleRecipeType — a custom recipe type with its own book layout.
  *
- * <p>Delete or rename what you don't need.
+ * Delete or rename what you don't need.
  */
 public final class FDAddonTemplate extends JavaPlugin {
 
@@ -115,7 +111,7 @@ public final class FDAddonTemplate extends JavaPlugin {
         registerRecipes();
 
         // 3) Folia-safe scheduling example: a repeating task. runRepeating returns an ApiTask handle.
-        heartbeat = FarmersDelightApi.get().runRepeating(this::heartbeat, 20L, 20L * 60L);
+        heartbeat = FarmersDelightApi.get().runRepeating(this::onHeartbeat, 20L, 20L * 60L);
 
         // 4) Custom food effects: read item-id → duration mappings from config.yml's `food-effects` section
         //    and register them with FD. Reload-safe — applies again on /fd reload.
@@ -168,6 +164,9 @@ public final class FDAddonTemplate extends JavaPlugin {
             FarmersDelightApi.get().unregisterCookingPotRecipe(NS + ":example_stew");
             FarmersDelightApi.get().unregisterCuttingBoardRecipe(NS + ":example_cut");
             CustomBuffRegistry.unregister(exampleBuff);
+            for (Player p : getServer().getOnlinePlayers()) {
+                if (buffBossbar != null) buffBossbar.hide(p);
+            }
             displays.hideAll();
             foodEffects.clear();
             ExampleAdvancements.unregister();
@@ -176,8 +175,8 @@ public final class FDAddonTemplate extends JavaPlugin {
     }
 
     /**
-     * Reload everything driven by this addon's config. Called by {@link ExampleReloadListener} on
-     * {@code /fd reload all}. The reason argument is for logging only — split it out if you want
+     * Reload everything driven by this addon's config. Called by ExampleReloadListener on
+     * /fd reload all. The reason argument is for logging only — split it out if you want
      * fine-grained reloads (recipes-only vs. effects-only).
      */
     public void reloadAddon(String reason) {
@@ -189,8 +188,8 @@ public final class FDAddonTemplate extends JavaPlugin {
 
     // ── Recipe registration via the FD API ──────────────────────────────────────────────────────
     /**
-     * Register this addon's cooking-pot and cutting-board recipes. Called from {@code onEnable},
-     * {@link #reloadAddon}, and {@link ExampleReloadListener#onCraftEngineReload}.
+     * Register this addon's cooking-pot and cutting-board recipes. Called from onEnable,
+     * reloadAddon, and ExampleReloadListener.onCraftEngineReload.
      */
     public void registerRecipes() {
         FarmersDelightApi api = FarmersDelightApi.get();
@@ -224,7 +223,7 @@ public final class FDAddonTemplate extends JavaPlugin {
     }
 
     // ── Other api capabilities ───────────────────────────────────────────────────────────────────
-    private void heartbeat() {
+    private void onHeartbeat() {
         // Example: nothing to do here — see the methods below for what the api offers.
     }
 
@@ -302,7 +301,7 @@ public final class FDAddonTemplate extends JavaPlugin {
         }
     }
 
-    /** Advancements: grant / check on your addon tab. The {@link ExampleAdvancements} helper wraps the
+    /** Advancements: grant / check on your addon tab. The ExampleAdvancements helper wraps the
      * tab-id boilerplate; the listener handles automatic awarding on player actions. */
     public void advancements(Player player) {
         ExampleAdvancements.award(player, ExampleAdvancements.FIRST_STEW);

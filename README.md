@@ -135,16 +135,21 @@ boolean has = FarmersDelightFoodEffects.hasNourishment(player);
 
 For more than a handful of foods, drive the mapping from your own `config.yml` instead of hard-coding ids
 in Java — admins can tune it, your reload listener picks it up, and the pattern stays the same for any
-addon. See `BrewinAndChewin/src/main/java/com/huidu/brewinandchewin/util/FoodEffectRegistrar.java` for a
-~50-line drop-in helper: hold one per plugin, call `apply(getConfig().getConfigurationSection("food-effects"))`
-on enable + reload, `clear()` on disable. Config shape:
+addon. The template ships this helper:
+[`util/ExampleFoodEffectRegistrar`](src/main/java/com/example/fdaddon/util/ExampleFoodEffectRegistrar.java)
+(mirrors BrewinAndChewin's production `FoodEffectRegistrar`) — hold one per plugin, call
+`apply(getConfig().getConfigurationSection("food-effects"))` on enable + reload, `clear()` on disable. It
+parses each effect key as a **list** of `id`/`duration` entries (durations in **seconds**), matching the
+shipped `config.yml`:
 
 ```yaml
 food-effects:
-  nourishment:
-    "myaddon:hearty_stew": 300   # seconds
   comfort:
-    "myaddon:warm_tea": 60
+    - id: "myaddon:warm_tea"
+      duration: 60      # seconds
+  nourishment:
+    - id: "myaddon:hearty_stew"
+      duration: 300     # seconds
 ```
 
 ### Advancements — `api.advancement.FarmersDelightAdvancements` (+ `AdvancementTree`)

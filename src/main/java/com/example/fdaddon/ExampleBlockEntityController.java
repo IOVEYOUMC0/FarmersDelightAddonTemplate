@@ -6,13 +6,13 @@ import net.momirealms.craftengine.libraries.nbt.CompoundTag;
 
 /**
  * Per-block content, stored IN the CraftEngine block entity — NOT in a side file. CraftEngine creates one
- * controller per placed block (via {@link ExampleBlockBehavior#createBlockEntityController}) and persists
- * whatever you write in {@link #saveCustomData} together with the chunk; {@link #loadCustomData} restores
+ * controller per placed block (via ExampleBlockBehavior.createBlockEntityController) and persists
+ * whatever you write in saveCustomData together with the chunk; loadCustomData restores
  * it on load. This is exactly how FarmersDelight's cooking pot / skillet / stove keep their state — no
  * separate yml, no manual save/load lifecycle. (A plugin-managed yml only exists in FD as legacy migration.)
  *
- * <p>Here we store a single use-counter. In a real block store an inventory, fluid level, owner, etc. —
- * CraftEngine's {@code CompoundTag} (and {@code ListTag}, {@code ItemStackUtils}) serialize all of it.
+ * Here we store a single use-counter. In a real block store an inventory, fluid level, owner, etc. —
+ * CraftEngine's CompoundTag (and ListTag, ItemStackUtils) serialize all of it.
  */
 public final class ExampleBlockEntityController extends BlockEntityController {
 

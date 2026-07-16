@@ -13,19 +13,17 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 /**
  * Awards example advancements based on player actions. Two trigger paths:
- *   <ul>
- *     <li>{@link FarmersDelightProduceEvent} — fired by FarmersDelight (and any addon, e.g. BrewinAndChewin's
- *         keg) when a station hands a produced item to a player. The simplest hook for "the player got X".</li>
- *     <li>{@link PlayerItemConsumeEvent} — fired when the player finishes eating/drinking an item. Used for
- *         the multiTask criteria: each soup variant ticks one criterion.</li>
- *   </ul>
+ *   - FarmersDelightProduceEvent — fired by FarmersDelight (and any addon, e.g. BrewinAndChewin's
+ *         keg) when a station hands a produced item to a player. The simplest hook for "the player got X".
+ *   - PlayerItemConsumeEvent — fired when the player finishes eating/drinking an item. Used for
+ *         the multiTask criteria: each soup variant ticks one criterion.
  *
- * <p>On {@link PlayerJoinEvent} we proactively grant the root + show the tab so it appears in the player's
+ * On PlayerJoinEvent we proactively grant the root + show the tab so it appears in the player's
  * advancement screen immediately (otherwise UAA-managed tabs only appear after the first grant).
  */
 public final class ExampleAdvancementListener implements Listener {
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         if (!FarmersDelightAdvancements.isAvailable()) return;
         Player player = event.getPlayer();
