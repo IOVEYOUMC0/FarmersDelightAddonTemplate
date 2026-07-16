@@ -67,15 +67,33 @@ Helper + event classes (also under `api.**`):
   `idsOf` / `tagIdsOf` / `isCustomItem` / `customIdOf` / `craftingRemainderOf` / `applyDisplay` / `buildIcon`.
   CraftEngine-aware; use instead of raw `Material` checks (the display helpers are covered under "More API surface").
 - `api.recipe.*` — `RecipeType`, `ViewableRecipe`, `RecipeFiller`, `RecipeEditor`, `EditableRecipe`,
-  `NumericField`, `RecipeBookLayout` (give your type its own book layout — see `ExampleRecipeType`), and
-  read-only `FarmersDelightRecipes` (query FD's own cooking-pot/cutting-board recipes).
+  `NumericField`, `JumpTarget`, `IngredientMatching`, `RecipeBookLayout` (give your type its own book
+  layout — see `ExampleRecipeType`), and read-only `FarmersDelightRecipes` (query FD's own
+  cooking-pot/cutting-board recipes).
   - **Independent recipe book**: override `RecipeType.listLayout()` / `detailLayout()` to return a
     `RecipeBookLayout` (title + grid + decoration items, built from your own gui.yml; titles may carry
     CraftEngine `<image:>`/`<shift:>` for custom-texture backgrounds). `ViewableRecipe.displaySlots()`
-    maps custom roles (e.g. `fluid`, `tool`) to extra detail slots. Open with `openRecipeBook(player,
-    typeId, filler)`. Return null from the layouts to fall back to FD's shared book.
+    maps custom roles (e.g. `fluid`, `tool`) to extra detail slots, and `jumpTargets()` makes such a slot
+    clickable. Open with `openRecipeBook(player, typeId, filler)`. Return null from the layouts to fall
+    back to FD's shared book.
+  - **Editable type**: override `RecipeType.editor()` to return a `RecipeEditor` (item-slot labels +
+    `NumericField`s) so admins edit recipes through FD's editor GUI — see `recipe/ExampleRecipeEditor`. A
+    `RecipeFiller` (see `recipe/ExampleRecipeFiller`, matching with `IngredientMatching`) adds the "Fill" button.
+- `api.buff.*` — `CustomBuff` + `CustomBuffRegistry` + `BuffBossbar`: a persistent addon buff that FD's
+  milk-cure listener and its join/quit persistence lifecycle drive, with a per-player boss-bar readout on
+  FD's channel. See `buff/ExampleCustomBuff` + `buff/ExampleBuffBossbar`.
+- **Packet item displays** — `FarmersDelightApi.createItemDisplay` / `updateItemDisplay` / `removeItemDisplay`:
+  floating items shown to nearby players with no real entity. Keep the returned int handles, recreate on
+  chunk load, and report them on `FarmersDelightCollectLiveDisplaysEvent` so `/fd cleanup` keeps them. See
+  `display/ExampleItemDisplayManager`.
 - `api.scheduler.ApiTask` — cancel handle for repeating tasks.
-- `api.event.*` — `FarmersDelightReloadEvent`, `FarmersDelightProduceEvent`, `ProfessionCookingExperienceEvent`.
+- `api.event.*` — `FarmersDelightReloadEvent`, `FarmersDelightProduceEvent`, `ProfessionCookingExperienceEvent`,
+  plus the admin / lifecycle bridges `FarmersDelightCleanupEvent`, `FarmersDelightMigrateEvent`,
+  `FarmersDelightWarmupEvent` and `FarmersDelightCollectLiveDisplaysEvent` — see
+  `listener/ExampleFarmersDelightEventsListener` (and the display manager for collect-live-displays).
+- `api.util.*` — `PluginManagerGuard` (blocks a live PlugMan reload/unload of your plugin; register it in
+  onEnable) and `TooltipUtils.hideDurabilityLine` (hide the durability line when an item's damage encodes a
+  meter — see `util/ExampleTooltipCustomizer`).
 
 ## More API surface (text, items, effects, advancements, recipe queries, discovery)
 
