@@ -94,8 +94,11 @@ Helper + event classes (also under `api.**`):
 - `api.util.*` — `PluginManagerGuard` (blocks a live PlugMan reload/unload of your plugin; register it in
   onEnable) and `TooltipUtils.hideDurabilityLine` (hide the durability line when an item's damage encodes a
   meter — see `util/ExampleTooltipCustomizer`).
+- `api.config.*` — `ConfigFileUpdater` + `ConfigUpdatePolicy` + `ConfigUpdateReport` + `ConfigKeyRename`:
+  keep the `config.yml` an operator already has in step with the one your build ships (covered under
+  "More API surface").
 
-## More API surface (text, items, effects, advancements, recipe queries, discovery)
+## More API surface (text, items, effects, config updates, advancements, recipe queries, discovery)
 
 All under `com.huidu.farmersdelight.api.**`. Guard with `FarmersDelightApi.get().isAvailable()` (advancements also have their own `FarmersDelightAdvancements.isAvailable()`). [`FDAddonTemplate.java`](src/main/java/com/example/fdaddon/FDAddonTemplate.java) has runnable examples: `foodEffects`, `advancements`, `recipeQueries`, `textAndMessages`, `recipeDiscovery`.
 
@@ -151,6 +154,109 @@ food-effects:
     - id: "myaddon:hearty_stew"
       duration: 300     # seconds
 ```
+
+### Keeping your `config.yml` up to date — `api.config.ConfigFileUpdater`
+
+Bukkit's `saveDefaultConfig()` writes the bundled file **only when none exists**. It never adds a key to a
+file that is already there, so every setting you add in a later version stays absent on a server that has
+been running since before that version, and the feature behind it silently reads its hardcoded fallback
+forever. Moving or dropping a setting is worse: the operator's tuned value is left sitting at a path
+nothing reads.
+
+`ConfigFileUpdater` fixes that. It renames paths that moved, deletes paths nothing reads any more, and
+fills in settings a later version introduced — leaving every value the operator set exactly as it was. The
+machinery is generic; *what* to rename, retire and protect is your data, supplied as a `ConfigUpdatePolicy`.
+
+**Use `updateMainConfig(plugin, policy)`.** It performs the whole ordered sequence and writes the file back,
+and the order is load-bearing:
+
+1. **Renames first.** A rename is skipped when the new path is already set. Merging first would plant the
+   bundled default at the new path, make every rename a no-op, and silently drop the value the operator had
+   tuned under the old name.
+2. **Retired keys next** — after a rename has carried a value to its current path, and before the merge, so
+   a setting nothing reads is not written back in.
+3. **The additive merge last.** Existing values are never overwritten; only genuinely absent keys are added,
+   together with the comment that documents them.
+
+Nothing is written when nothing changed, and a timestamped copy of the file is taken before the rewrite
+(the same pass that adds settings also deletes values the operator wrote).
+
+**Registry sections.** A registry section is one whose children are *content keyed by id* rather than fixed
+settings — a food list, a drop table, a per-item override map. Deleting an entry there is the operator's way
+of disabling that item, so the merge must never add entries back one at a time or it silently undoes their
+decision. Declare them with `registrySection(...)` and the merge will only create such a section when the
+operator's file has none of it at all, never touching individual entries afterwards. Everything not declared
+is treated as a plain setting and merged key by key.
+
+**The api never logs.** It returns a `ConfigUpdateReport` and you say what happened, in your own wording and
+your own language files. A backup that could not be written is reported on `report.backupError()` rather than
+thrown — the update still goes ahead, and it is up to you whether the operator hears that they lost the
+safety net.
+
+Modelled on BrewinAndChewin's production `BrewinConfigBootstrap`:
+
+```java
+import com.huidu.farmersdelight.api.config.ConfigFileUpdater;
+import com.huidu.farmersdelight.api.config.ConfigKeyRename;
+import com.huidu.farmersdelight.api.config.ConfigUpdatePolicy;
+import com.huidu.farmersdelight.api.config.ConfigUpdateReport;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public final class MyAddonConfigBootstrap {
+
+    private static final ConfigUpdatePolicy POLICY = ConfigUpdatePolicy.builder()
+            // Old path -> new path, applied in the order added, so two entries can chain.
+            .migrate("tipsy.max-points", "tipsy.max-duration-seconds")
+            // Deleted from the operator's file because no code reads it any more.
+            .retire("legacy.fade-warning-ticks")
+            // Keyed by item id: a deleted entry means the operator turned that item off.
+            .registrySection("food-effects.comfort", "food-effects.nourishment")
+            .build();
+
+    private final JavaPlugin plugin;
+
+    public MyAddonConfigBootstrap(JavaPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    /** Call from onEnable, after saveDefaultConfig() and before reading any config value. */
+    public void updateConfig() {
+        ConfigUpdateReport report;
+        try {
+            report = ConfigFileUpdater.updateMainConfig(plugin, POLICY);
+        } catch (Exception e) {
+            plugin.getLogger().warning("config.yml could not be updated: " + e.getMessage());
+            return;
+        }
+        if (report.backupError() != null) {
+            plugin.getLogger().warning("config.yml was not backed up: " + report.backupError());
+        }
+        for (ConfigKeyRename rename : report.migratedKeys()) {
+            plugin.getLogger().info("Moved " + rename.oldPath() + " to " + rename.newPath() + ".");
+        }
+        if (!report.retiredKeys().isEmpty()) {
+            plugin.getLogger().info("Removed unread settings: " + String.join(", ", report.retiredKeys()));
+        }
+        if (report.addedKeys() > 0) {
+            plugin.getLogger().info("Added " + report.addedKeys() + " new settings to config.yml.");
+        }
+    }
+}
+```
+
+The report also has `changed()`, true when anything at all happened. `addedKeys()` counts value keys only,
+not the sections around them.
+
+For a plugin with more than one file, the class holds no state: build one policy per file and drive the
+steps yourself with `readBundledYaml` / `readYamlFile` → `applyTo(bundled, existing, policy)` → `backup` →
+`tidy` → save. **Call `tidy(config)` immediately before any `save`** — Bukkit's YAML dumper folds values
+longer than 80 characters across several physical lines, which turns item-id lists and message templates
+into multi-line blocks that are painful to edit by hand. `tidy` pins the width, the 2-space indent and
+comment parsing; `updateMainConfig` already does it for you.
+
+`installBundledResource` / `writeStringAtomically` / `needsRestore` round the package out: install a bundled
+file through a temp file and an atomic move (a crash leaves the old file intact, not half a file), and
+detect a config that no longer parses or was saved in the wrong encoding so you can restore it from the jar.
 
 ### Advancements — `api.advancement.FarmersDelightAdvancements` (+ `AdvancementTree`)
 
