@@ -1,0 +1,76 @@
+# Custom block. The `behavior` type below is registered in Java (BlockBehaviors.register in onLoad);
+# CraftEngine instantiates it when it parses this block. Collision/lighting come from the host state:
+#   auto-state: note_block  -> solid, full-cube collision (no collision box to author)
+#   auto-state: non_tintable_leaves -> collides but renders cleanly for non-cube models
+#   state: tripwire[...]     -> non-colliding (flat food blocks)
+blocks:
+  fdaddon:example_block:
+    settings:
+      hardness: 2.0
+      tags:
+        - minecraft:mineable/pickaxe
+      sounds:
+        break: minecraft:block.stone.break
+        place: minecraft:block.stone.place
+        step: minecraft:block.stone.step
+    states:
+      properties:
+        facing:
+          type: 4-direction
+          default: north
+      appearances:
+        north:
+          auto-state: note_block
+          model:
+            path: fdaddon:block/example_block
+        east:
+          auto-state: note_block
+          model:
+            path: fdaddon:block/example_block
+            y: 90
+        south:
+          auto-state: note_block
+          model:
+            path: fdaddon:block/example_block
+            y: 180
+        west:
+          auto-state: note_block
+          model:
+            path: fdaddon:block/example_block
+            y: 270
+      variants:
+        facing=north:
+          appearance: north
+        facing=east:
+          appearance: east
+        facing=south:
+          appearance: south
+        facing=west:
+          appearance: west
+    behavior:
+      - type: fdaddon:example_block
+    loot:
+      template: default:loot_table/self
+
+items:
+  fdaddon:example_block:
+    data:
+      item-name: <!i><l10n:block.fdaddon.example_block>
+    model: fdaddon:block/example_block
+    behavior:
+      type: block_item
+      block: fdaddon:example_block
+
+recipes:
+  fdaddon:example_block:
+    type: shaped
+    category: building
+    pattern:
+      - "SSS"
+      - "S S"
+      - "SSS"
+    ingredients:
+      S: "minecraft:cobblestone"
+    result:
+      id: fdaddon:example_block
+      count: 1

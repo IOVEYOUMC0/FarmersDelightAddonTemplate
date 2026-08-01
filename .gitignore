@@ -1,0 +1,13 @@
+.gradle/
+build/
+bin/
+out/
+*.class
+
+# Vendored FarmersDelight jar (compile-only). Build it from the Farmersdelight repo and drop it in libs/.
+libs/*.jar
+
+.idea/
+*.iml
+.vscode/
+local.properties
