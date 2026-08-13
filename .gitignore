@@ -4,8 +4,10 @@ bin/
 out/
 *.class
 
-# Vendored FarmersDelight jar (compile-only). Build it from the Farmersdelight repo and drop it in libs/.
-libs/*.jar
+# Vendored FarmersDelight api facade jar (compile-only). Prebuilt from the FarmersDelight repo's :apiJar
+# task and committed, so the addon builds without access to the closed-source FarmersDelight source.
+libs/*
+!libs/farmersdelight-1.0.0.jar
 
 .idea/
 *.iml

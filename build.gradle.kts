@@ -18,22 +18,9 @@ repositories {
     mavenLocal()
 }
 
-// Composite build: ../plugin is included via settings.gradle.kts (`includeBuild`). The syncFarmersDelightApi
-// task below runs the main plugin's :apiJar task and copies its output into libs/, so the addon always
-// compiles against an up-to-date api.** facade — no manual jar copy. At runtime the addon depends on the
-// FarmersDelight plugin (see plugin.yml depend), whose api.** names are kept by ProGuard.
-val syncFarmersDelightApi by tasks.registering(Copy::class) {
-    group = "build"
-    description = "Builds farmersdelight :apiJar via composite build and stages it into libs/."
-    dependsOn(gradle.includedBuild("farmersdelight-plugin").task(":apiJar"))
-    from(file("../plugin/build/libs")) {
-        include("farmersdelight-plugin-*-api.jar")
-        rename { "farmersdelight-1.0.0.jar" }
-    }
-    into("libs")
-}
-
-tasks.compileJava { dependsOn(syncFarmersDelightApi) }
+// The FarmersDelight api.** facade jar is prebuilt (from the closed-source FarmersDelight repo's :apiJar
+// task) and committed into libs/, so this addon builds without any access to the FarmersDelight source.
+// When the main plugin publishes a new API, replace libs/farmersdelight-1.0.0.jar and bump the version.
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
@@ -52,7 +39,7 @@ dependencies {
     // FarmersDelight — the ONLY thing you may reference is its obfuscation-safe `api.**` facade.
     // FD's internals are repackaged/renamed by ProGuard; only `com.huidu.farmersdelight.api.**` keeps
     // stable names. This is an API-ONLY stub jar (just `com.huidu.farmersdelight.api.**`, no internals,
-    // not a runnable plugin) — synced from the FarmersDelight repo via syncFarmersDelightApi above.
+    // not a runnable plugin) — committed in libs/.
     // At runtime the real FarmersDelight plugin (a server dependency) provides the implementation.
     compileOnly(files("libs/farmersdelight-1.0.0.jar"))
 }
