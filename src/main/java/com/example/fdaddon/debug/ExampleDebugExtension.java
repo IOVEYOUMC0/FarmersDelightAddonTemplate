@@ -2,6 +2,7 @@ package com.example.fdaddon.debug;
 
 import com.example.fdaddon.ExampleBlockEntityController;
 import com.example.fdaddon.FDAddonTemplate;
+import com.example.fdaddon.util.CraftEngineCompat;
 import com.huidu.farmersdelight.api.util.DebugToolExtension;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -98,7 +99,7 @@ public final class ExampleDebugExtension implements DebugToolExtension {
     @Override
     public int activate(Player player) {
         if (player == null) return 0;
-        CEWorld ceWorld = BukkitWorldManager.instance().getWorld(player.getWorld().getUID());
+        CEWorld ceWorld = CraftEngineCompat.getCEWorld(BukkitWorldManager.instance(), player.getWorld().getUID());
         if (ceWorld == null) return 0;
 
         int activated = 0;

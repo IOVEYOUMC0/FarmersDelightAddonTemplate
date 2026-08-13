@@ -1,5 +1,6 @@
 package com.example.fdaddon;
 
+import com.example.fdaddon.util.AddonLang;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.InputStream;
@@ -55,7 +56,7 @@ public final class AddonResources {
                 }
             }
         } catch (Exception e) {
-            plugin.getLogger().warning("Failed to release CraftEngine resources: " + e.getMessage());
+            plugin.getLogger().warning(AddonLang.get("fdaddon.resources_release_failed", "error", e.getMessage()));
         }
     }
 }

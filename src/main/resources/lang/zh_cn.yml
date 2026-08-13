@@ -1,0 +1,16 @@
+# 示例附属插件控制台日志文案。语言跟随 CraftEngine 的 forced locale，其次 JVM 语言；en_us 兜底。
+# 直接编辑即可——这些文件内置在插件 jar 里，插件启用时会重新读取（需完整重启生效）。fork 时记得改 fdaddon: 前缀。
+fdaddon:
+  farmersdelight_unavailable: "FarmersDelight 不可用；附属功能已禁用。"
+  api_version: "FarmersDelight api v{version}（station-query={station_query}）。"
+  enabled: "FDAddonTemplate 已启用。"
+  reloaded: "已随 FarmersDelight 重载（原因：{reason}）。"
+  advancements_disabled: "示例成就已禁用（未加载 UltimateAdvancementAPI）。"
+  advancements_registered: "示例成就已注册。"
+  advancements_registration_failed: "示例成就注册失败。"
+  config_update_failed: "config.yml 更新失败：{error}"
+  config_backup_failed: "config.yml 备份失败：{error}"
+  config_key_migrated: "已将 {old} 移到 {new}。"
+  config_keys_retired: "已移除不再读取的配置：{keys}"
+  config_keys_merged: "已向 config.yml 新增 {count} 个配置项。"
+  resources_release_failed: "释放 CraftEngine 资源失败：{error}"

@@ -1,5 +1,6 @@
 package com.example.fdaddon.advancement;
 
+import com.example.fdaddon.util.AddonLang;
 import com.huidu.farmersdelight.api.advancement.FarmersDelightAdvancements;
 import com.huidu.farmersdelight.api.item.FarmersDelightItems;
 import org.bukkit.Material;
@@ -44,11 +45,14 @@ public final class ExampleAdvancements {
 
     /**
      * Builds the tab and registers it with FarmersDelight. Call from onEnable after FD is ready.
+     * NOTE: the icons in this example are vanilla items. If a tab's icons are CraftEngine custom
+     * items, defer registration to a FarmersDelightWarmupEvent handler — CE items are unresolved at
+     * onEnable, so every icon built then falls back to its Material and never updates.
      * Returns false if UAA is missing — that's a normal soft-dep no-op, not an error.
      */
     public static boolean register(Logger log) {
         if (!FarmersDelightAdvancements.isAvailable()) {
-            if (log != null) log.info("Example advancements disabled (UltimateAdvancementAPI not loaded).");
+            if (log != null) log.info(AddonLang.get("fdaddon.advancements_disabled"));
             return false;
         }
 
@@ -67,7 +71,9 @@ public final class ExampleAdvancements {
                 .register();
 
         if (log != null) {
-            log.info(ok ? "Example advancements registered." : "Example advancements registration failed.");
+            log.info(ok
+                    ? AddonLang.get("fdaddon.advancements_registered")
+                    : AddonLang.get("fdaddon.advancements_registration_failed"));
         }
         return ok;
     }

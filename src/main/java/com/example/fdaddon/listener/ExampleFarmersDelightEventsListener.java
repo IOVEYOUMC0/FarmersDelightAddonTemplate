@@ -67,6 +67,8 @@ public final class ExampleFarmersDelightEventsListener implements Listener {
      * Fired once CraftEngine items are ready, on startup and after each /ce reload. Pre-build your own
      * CraftEngine item stacks off the hot path so the first interaction is cheap. Handlers must be PURE
      * computation: no world, entity, region or block access. getReason() is "enable" or "reload", or null.
+     * This is also the place to (re-)register an advancement tab whose icons are CraftEngine items —
+     * registering it at onEnable freezes every icon to its Material fallback.
      */
     @EventHandler
     public void onWarmup(FarmersDelightWarmupEvent event) {

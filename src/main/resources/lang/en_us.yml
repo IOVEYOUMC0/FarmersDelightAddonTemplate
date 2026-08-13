@@ -1,0 +1,17 @@
+# Example addon console log messages. The selected locale follows CraftEngine's forced locale,
+# then the JVM locale; en_us is the fallback. Edit freely — these ship inside the plugin jar and are
+# read fresh on plugin enable (a full restart applies changes). Rename the fdaddon: prefix when forking.
+fdaddon:
+  farmersdelight_unavailable: "FarmersDelight not available; addon features disabled."
+  api_version: "FarmersDelight api v{version} (station-query={station_query})."
+  enabled: "FDAddonTemplate enabled."
+  reloaded: "Reloaded with FarmersDelight (reason: {reason})."
+  advancements_disabled: "Example advancements disabled (UltimateAdvancementAPI not loaded)."
+  advancements_registered: "Example advancements registered."
+  advancements_registration_failed: "Example advancements registration failed."
+  config_update_failed: "config.yml could not be updated: {error}"
+  config_backup_failed: "config.yml was not backed up: {error}"
+  config_key_migrated: "Moved {old} to {new}."
+  config_keys_retired: "Removed unread settings: {keys}"
+  config_keys_merged: "Added {count} new settings to config.yml."
+  resources_release_failed: "Failed to release CraftEngine resources: {error}"

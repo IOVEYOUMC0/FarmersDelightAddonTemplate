@@ -7,6 +7,10 @@ plugins {
 group = "com.example.fdaddon"
 version = "1.0.0"
 
+// CraftEngine version selector — must be declared before `dependencies {}` uses it.
+val ceVersion = providers.gradleProperty("ceVersion").orElse("26.7.4").get()
+val pluginArchiveClassifier = if (ceVersion == "26.8") "ce268" else "ce2674"
+
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
@@ -14,22 +18,43 @@ repositories {
     mavenLocal()
 }
 
+// Composite build: ../plugin is included via settings.gradle.kts (`includeBuild`). The syncFarmersDelightApi
+// task below runs the main plugin's :apiJar task and copies its output into libs/, so the addon always
+// compiles against an up-to-date api.** facade — no manual jar copy. At runtime the addon depends on the
+// FarmersDelight plugin (see plugin.yml depend), whose api.** names are kept by ProGuard.
+val syncFarmersDelightApi by tasks.registering(Copy::class) {
+    group = "build"
+    description = "Builds farmersdelight :apiJar via composite build and stages it into libs/."
+    dependsOn(gradle.includedBuild("farmersdelight-plugin").task(":apiJar"))
+    from(file("../plugin/build/libs")) {
+        include("farmersdelight-plugin-*-api.jar")
+        rename { "farmersdelight-1.0.0.jar" }
+    }
+    into("libs")
+}
+
+tasks.compileJava { dependsOn(syncFarmersDelightApi) }
+
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
     compileOnly("org.jetbrains:annotations:26.1.0")
 
-    // CraftEngine — your addon talks to CE for custom items/blocks/recipes at runtime.
-    compileOnly("net.momirealms:craft-engine-core:26.7.4")
-    compileOnly("net.momirealms:craft-engine-bukkit:26.7.4")
-    compileOnly("net.momirealms:craft-engine-bukkit-proxy:26.7.4")
+    // CraftEngine — two supported server-side versions. Pass -PceVersion=26.7.4 (default, maven) or
+    // -PceVersion=26.8 (local jar shared from ../FarmersDelight/libs, since 26.8-SNAPSHOT is unpublished).
+    if (ceVersion == "26.8") {
+        compileOnly(files("../FarmersDelight/libs/craft-engine-26.8.jar"))
+    } else {
+        compileOnly("net.momirealms:craft-engine-core:26.7.4")
+        compileOnly("net.momirealms:craft-engine-bukkit:26.7.4")
+        compileOnly("net.momirealms:craft-engine-bukkit-proxy:26.7.4")
+    }
 
     // FarmersDelight — the ONLY thing you may reference is its obfuscation-safe `api.**` facade.
     // FD's internals are repackaged/renamed by ProGuard; only `com.huidu.farmersdelight.api.**` keeps
     // stable names. This is an API-ONLY stub jar (just `com.huidu.farmersdelight.api.**`, no internals,
-    // not a runnable plugin) — build it in the FarmersDelight repo with `gradlew apiJar` and copy
-    // build/libs/farmersdelight-plugin-*-api.jar into this repo's libs/ (renamed).
+    // not a runnable plugin) — synced from the FarmersDelight repo via syncFarmersDelightApi above.
     // At runtime the real FarmersDelight plugin (a server dependency) provides the implementation.
-    compileOnly(files("libs/farmersdelight-api-1.0.0.jar"))
+    compileOnly(files("libs/farmersdelight-1.0.0.jar"))
 }
 
 java {
@@ -50,7 +75,7 @@ tasks.processResources {
 
 tasks.shadowJar {
     archiveBaseName.set("fdaddontemplate")
-    archiveClassifier.set("")
+    archiveClassifier.set(pluginArchiveClassifier)
 }
 
 tasks.jar { enabled = false }

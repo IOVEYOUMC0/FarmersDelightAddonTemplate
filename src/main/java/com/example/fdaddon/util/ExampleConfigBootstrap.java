@@ -57,20 +57,23 @@ public final class ExampleConfigBootstrap {
         try {
             report = ConfigFileUpdater.updateMainConfig(plugin, POLICY);
         } catch (Exception e) {
-            plugin.getLogger().warning("config.yml could not be updated: " + e.getMessage());
+            plugin.getLogger().warning(AddonLang.get("fdaddon.config_update_failed",
+                    "error", String.valueOf(e.getMessage())));
             return;
         }
         if (report.backupError() != null) {
-            plugin.getLogger().warning("config.yml was not backed up: " + report.backupError());
+            plugin.getLogger().warning(AddonLang.get("fdaddon.config_backup_failed", "error", report.backupError()));
         }
         for (ConfigKeyRename rename : report.migratedKeys()) {
-            plugin.getLogger().info("Moved " + rename.oldPath() + " to " + rename.newPath() + ".");
+            plugin.getLogger().info(AddonLang.get("fdaddon.config_key_migrated",
+                    "old", rename.oldPath(), "new", rename.newPath()));
         }
         if (!report.retiredKeys().isEmpty()) {
-            plugin.getLogger().info("Removed unread settings: " + String.join(", ", report.retiredKeys()));
+            plugin.getLogger().info(AddonLang.get("fdaddon.config_keys_retired",
+                    "keys", String.join(", ", report.retiredKeys())));
         }
         if (report.addedKeys() > 0) {
-            plugin.getLogger().info("Added " + report.addedKeys() + " new settings to config.yml.");
+            plugin.getLogger().info(AddonLang.get("fdaddon.config_keys_merged", "count", report.addedKeys()));
         }
     }
 }

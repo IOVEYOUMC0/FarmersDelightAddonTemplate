@@ -9,6 +9,7 @@ import com.example.fdaddon.display.ExampleItemDisplayManager;
 import com.example.fdaddon.listener.ExampleFarmersDelightEventsListener;
 import com.example.fdaddon.listener.ExampleReloadListener;
 import com.example.fdaddon.recipe.ExampleRecipeFiller;
+import com.example.fdaddon.util.AddonLang;
 import com.example.fdaddon.util.ExampleConfigBootstrap;
 import com.example.fdaddon.util.ExampleFoodEffectRegistrar;
 import com.example.fdaddon.util.ExampleTooltipCustomizer;
@@ -94,15 +95,19 @@ public final class FDAddonTemplate extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        // Resolve console-message language from the bundled lang files before any addon log line is emitted.
+        AddonLang.init(this);
         // Bring an operator's existing config.yml up to date (renames / retires / additive merge) before any
         // value is read. Runs even if FarmersDelight turns out to be unavailable — it only touches your file.
         configBootstrap.updateConfig();
 
         // ALWAYS guard api use with isAvailable(): it's true only when FarmersDelight is present + enabled.
         if (!FarmersDelightApi.get().isAvailable()) {
-            getLogger().warning("FarmersDelight not available; addon features disabled.");
+            getLogger().warning(AddonLang.get("fdaddon.farmersdelight_unavailable"));
             return;
         }
+        // Count this addon's CraftEngine blocks in FarmersDelight's block-state usage report.
+        FarmersDelightApi.get().registerAddonBlockNamespace(NS);
 
         // Version + feature gating. isAvailable() answers "is FD running"; apiVersion() / hasFeature() answer
         // "does this FD build expose the surface I compiled against". Prefer these over the plugin's version
@@ -116,7 +121,8 @@ public final class FDAddonTemplate extends JavaPlugin {
             apiVersion = 0;
         }
         boolean hasStationQuery = apiVersion >= 1 && FarmersDelightApi.get().hasFeature("station-query");
-        getLogger().info("FarmersDelight api v" + apiVersion + " (station-query=" + hasStationQuery + ").");
+        getLogger().info(AddonLang.get("fdaddon.api_version",
+                "version", apiVersion, "station_query", hasStationQuery));
 
         // 1) Register your addon's recipe TYPE so its recipes can be shown in a recipe book. ExampleRecipeType
         //    also provides its OWN book layout (list/detail) — see showRecipes() to open it independently.
@@ -140,6 +146,10 @@ public final class FDAddonTemplate extends JavaPlugin {
 
         // 5) Advancement tab (needs UltimateAdvancementAPI): builds a tree with a root, a simple child,
         //    and a multiTask challenge. The listener awards them on FD's ProduceEvent + vanilla consume.
+        //    WARNING: this tab's icons are vanilla items, so registering at onEnable is safe. If your
+        //    icons are CraftEngine custom items, register the tab from a FarmersDelightWarmupEvent
+        //    handler instead: CE items do not exist at onEnable, so every icon built then silently
+        //    falls back to its Material and stays wrong for the whole session.
         ExampleAdvancements.register(getLogger());
         getServer().getPluginManager().registerEvents(new ExampleAdvancementListener(), this);
 
@@ -168,7 +178,7 @@ public final class FDAddonTemplate extends JavaPlugin {
         //     destructive command and tells the sender to /stop instead. Pass your plugin name.
         getServer().getPluginManager().registerEvents(new PluginManagerGuard(getName()), this);
 
-        getLogger().info("FDAddonTemplate enabled.");
+        getLogger().info(AddonLang.get("fdaddon.enabled"));
     }
 
     @Override
@@ -204,7 +214,7 @@ public final class FDAddonTemplate extends JavaPlugin {
         reloadConfig();
         foodEffects.apply(getConfig().getConfigurationSection("food-effects"));
         registerRecipes();
-        getLogger().info("Reloaded with FarmersDelight (reason: " + reason + ").");
+        getLogger().info(AddonLang.get("fdaddon.reloaded", "reason", reason));
     }
 
     // ── Recipe registration via the FD API ──────────────────────────────────────────────────────
