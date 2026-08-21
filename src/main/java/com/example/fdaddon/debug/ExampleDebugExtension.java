@@ -33,6 +33,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * when FD is built without -PdebugTools=true: the registry is dormant and these methods are
  * never called.
  *
+ * Status reporting: /fd stats lists every registered extension as a clickable name; clicking one
+ * runs /fd stats addon <name>, which prints the lines returned by status(). Return one line per
+ * data point for a readable breakdown. Lines are MiniMessage-parsed, so angle brackets can colour
+ * values deliberately.
+ *
  * This example keeps its own in-memory set of placed locations because the demo block has no
  * central manager. Plugins with a manager (e.g. BAC's KegManager) should iterate the manager
  * directly in activate / cleanupBeforeUndo instead of duplicating tracking.
@@ -121,7 +126,13 @@ public final class ExampleDebugExtension implements DebugToolExtension {
 
     @Override
     public List<String> status(Player player) {
-        return List.of("tracked example_blocks (debug-placed): " + placed.size());
+        // Called by /fd stats addon example_block. One line per data point; MiniMessage markup is
+        // allowed, so wrap dynamic values in a colour for contrast.
+        return List.of(
+                "<gray>debug-placed:</gray> <aqua>" + placed.size() + "</aqua>",
+                "<gray>active world:</gray> " + (player == null || player.getWorld() == null
+                        ? "n/a" : player.getWorld().getName())
+        );
     }
 
     @Override

@@ -7,9 +7,8 @@ plugins {
 group = "com.example.fdaddon"
 version = "1.0.0"
 
-// CraftEngine version selector — must be declared before `dependencies {}` uses it.
-val ceVersion = providers.gradleProperty("ceVersion").orElse("26.7.4").get()
-val pluginArchiveClassifier = if (ceVersion == "26.8") "ce268" else "ce2674"
+// CraftEngine is pinned to the vendored 26.8 jar (shared from ../FarmersDelight/libs/); older 26.7.4 builds are dropped.
+val pluginArchiveClassifier = "ce268"
 
 repositories {
     mavenCentral()
@@ -26,15 +25,8 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
     compileOnly("org.jetbrains:annotations:26.1.0")
 
-    // CraftEngine — two supported server-side versions. Pass -PceVersion=26.7.4 (default, maven) or
-    // -PceVersion=26.8 (local jar shared from ../FarmersDelight/libs, since 26.8-SNAPSHOT is unpublished).
-    if (ceVersion == "26.8") {
-        compileOnly(files("../FarmersDelight/libs/craft-engine-26.8.jar"))
-    } else {
-        compileOnly("net.momirealms:craft-engine-core:26.7.4")
-        compileOnly("net.momirealms:craft-engine-bukkit:26.7.4")
-        compileOnly("net.momirealms:craft-engine-bukkit-proxy:26.7.4")
-    }
+    // CraftEngine — pinned to the vendored 26.8 jar (shared from ../FarmersDelight/libs; 26.8-SNAPSHOT is unpublished).
+    compileOnly(files("../FarmersDelight/libs/craft-engine-26.8.jar"))
 
     // FarmersDelight — the ONLY thing you may reference is its obfuscation-safe `api.**` facade.
     // FD's internals are repackaged/renamed by ProGuard; only `com.huidu.farmersdelight.api.**` keeps
