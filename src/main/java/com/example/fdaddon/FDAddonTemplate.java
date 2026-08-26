@@ -71,6 +71,10 @@ public final class FDAddonTemplate extends JavaPlugin {
     // Recipe ids you register should be namespaced to your addon so they never clash with other addons.
     public static final String NS = "fdaddon";
 
+    // WorldGuard StateFlag registered via ProtectionCompat.registerCustomFlag. Admins gate placing, breaking
+    // and interacting with your custom block per region; a null flag would query only the master flag.
+    public static final String EXAMPLE_FLAG = NS + "-example";
+
     private ApiTask heartbeat;
     private final ExampleConfigBootstrap configBootstrap = new ExampleConfigBootstrap(this);
     private final ExampleFoodEffectRegistrar foodEffects = new ExampleFoodEffectRegistrar();
@@ -90,6 +94,14 @@ public final class FDAddonTemplate extends JavaPlugin {
         // Copy this addon's bundled CraftEngine resources into plugins/CraftEngine/resources/<namespace>/
         // (install-if-missing). Do this in onLoad so the files exist before CraftEngine scans them.
         AddonResources.release(this);
+
+        // Register a WorldGuard StateFlag so admins can gate your custom block per region. FD's
+        // ProtectionCompat maps it across FD's flags plus every AntiGriefLib-backed land plugin, so the
+        // same gate protects territory even without WorldGuard. Must run in onLoad, before WG locks its
+        // registry. Guard on FD being loaded, since the facade lives inside the FarmersDelight plugin.
+        if (getServer().getPluginManager().getPlugin("FarmersDelight") != null) {
+            com.huidu.farmersdelight.api.util.ProtectionCompat.registerCustomFlag(EXAMPLE_FLAG);
+        }
     }
 
     @Override

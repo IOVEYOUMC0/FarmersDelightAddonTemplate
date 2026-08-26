@@ -1,6 +1,7 @@
 package com.example.fdaddon;
 
 import com.example.fdaddon.util.CraftEngineCompat;
+import com.huidu.farmersdelight.api.util.ProtectionCompat;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -73,13 +74,20 @@ public final class ExampleBlockBehavior extends BlockBehavior implements EntityB
         if (player == null) {
             return InteractionResult.PASS;
         }
+        // Region protection: CraftEngine fake blocks bypass the vanilla interact events the land plugins
+        // listen to, so gate here like FD's own stations do. ProtectionCompat checks the addon's WorldGuard
+        // StateFlag (FDAddonTemplate.EXAMPLE_FLAG) plus every AntiGriefLib-backed land plugin.
+        BlockPos pos = context.getClickedPos();
+        if (!com.huidu.farmersdelight.api.util.ProtectionCompat.canUse(player,
+                player.getWorld().getBlockAt(pos.x(), pos.y(), pos.z()), FDAddonTemplate.EXAMPLE_FLAG)) {
+            return InteractionResult.PASS;
+        }
         // Look up the block entity at the clicked position and act on OUR controller. Per-block state never
         // lives on this singleton behavior — it lives in (and persists with) the block entity.
         CEWorld ceWorld = CraftEngineCompat.getCEWorld(BukkitWorldManager.instance(), player.getWorld().getUID());
         if (ceWorld == null) {
             return InteractionResult.PASS;
         }
-        BlockPos pos = context.getClickedPos();
         BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(pos);
         if (blockEntity == null) {
             return InteractionResult.PASS;

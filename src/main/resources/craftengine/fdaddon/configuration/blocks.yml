@@ -1,8 +1,3 @@
-# Custom block. The `behavior` type below is registered in Java (BlockBehaviors.register in onLoad);
-# CraftEngine instantiates it when it parses this block. Collision/lighting come from the host state:
-#   auto-state: note_block  -> solid, full-cube collision (no collision box to author)
-#   auto-state: non_tintable_leaves -> collides but renders cleanly for non-cube models
-#   state: tripwire[...]     -> non-colliding (flat food blocks)
 blocks:
   fdaddon:example_block:
     settings:
