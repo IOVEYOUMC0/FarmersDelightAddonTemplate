@@ -11,8 +11,8 @@ import java.util.Set;
  * Config-driven registration of FarmersDelight's Comfort + Nourishment food effects. Reads two lists from
  * a config section and registers each item-id → duration-ticks mapping with FD.
  *
- * Reload-safe: apply(ConfigurationSection) unregisters whatever it previously registered, so
- * calling it again after the user edits config never leaves stale entries.
+ * apply(ConfigurationSection) replaces this registrar's managed entries, so config reloads leave no
+ * stale registrations.
  *
  * Expected config shape (under your plugin's config.yml):
  * food-effects:
@@ -31,8 +31,7 @@ public final class ExampleFoodEffectRegistrar {
     private final Set<String> registeredNourishment = new HashSet<>();
 
     /**
-     * Apply a fresh set of registrations from section. Previously registered effects are removed
-     * first; pass a null/empty section to clear everything.
+     * Replace managed registrations from section. Pass a null or empty section to clear everything.
      */
     public void apply(ConfigurationSection section) {
         clear();
@@ -41,7 +40,7 @@ public final class ExampleFoodEffectRegistrar {
         loadList(section, "nourishment", false);
     }
 
-    /** Remove every food effect this registrar previously installed. Idempotent. */
+    /** Remove every food effect managed by this registrar. Idempotent. */
     public void clear() {
         for (String id : registeredComfort) FarmersDelightFoodEffects.unregisterComfortFood(id);
         for (String id : registeredNourishment) FarmersDelightFoodEffects.unregisterNourishmentFood(id);

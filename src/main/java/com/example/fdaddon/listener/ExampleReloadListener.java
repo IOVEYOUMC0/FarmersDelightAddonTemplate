@@ -33,8 +33,8 @@ public final class ExampleReloadListener implements Listener {
     }
 
     /**
-     * Fired by CraftEngine when items/blocks are (re)loaded. Re-register any recipes that reference CE
-     * custom items here — by now their ids resolve via FarmersDelightItems.create(...).
+     * Fired by CraftEngine when items and blocks are loaded. CE item ids resolve during this event, so
+     * recipes that reference custom items can be registered here.
      */
     @EventHandler
     public void onCraftEngineReload(CraftEngineReloadEvent event) {

@@ -7,7 +7,7 @@ plugins {
 group = "com.example.fdaddon"
 version = "1.0.0"
 
-// CraftEngine is pinned to the vendored 26.8 jar (shared from ../FarmersDelight/libs/); older 26.7.4 builds are dropped.
+// CraftEngine is pinned to the vendored 26.8 jar shared from ../FarmersDelight/libs/.
 val pluginArchiveClassifier = "ce268"
 
 repositories {

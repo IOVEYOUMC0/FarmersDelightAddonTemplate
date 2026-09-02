@@ -16,7 +16,7 @@ Your addon   ── bundles CraftEngine YAML  +  Java glue that calls the Farmer
 Three pieces, three responsibilities:
 
 1. **CraftEngine YAML** (`src/main/resources/craftengine/<namespace>/`) — your items, blocks, food
-   blocks, recipes, GUIs, images, translations. `AddonResources` copies these into
+   blocks, recipes, GUIs, images, translations. `CraftEngineResources` copies these into
    `plugins/CraftEngine/resources/<namespace>/` on first load (install-if-missing).
 2. **FarmersDelight API** (`FarmersDelightApi`) — the things CraftEngine can't do alone: cooking-pot /
    cutting-board recipes, the in-game recipe book, Folia-safe scheduling, heat-source queries, crafting XP.

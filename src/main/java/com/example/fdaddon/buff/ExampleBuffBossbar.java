@@ -40,18 +40,26 @@ public final class ExampleBuffBossbar {
             return;
         }
         for (Player player : Bukkit.getOnlinePlayers()) {
-            int remaining = buff.remainingSeconds(player);
-            if (remaining <= 0) {
-                BuffBossbar.hide(plugin, player, KEY);
-                continue;
-            }
-            // The title mirrors FarmersDelight's own buff bars: a translatable name plus a formatted duration.
-            Component title = FarmersDelightText.translatable(buff.nameKey(),
-                    FarmersDelightText.formatDuration(remaining));
-            float progress = Math.max(0f, Math.min(1f, remaining / FULL_SECONDS));
-            BuffBossbar.update(plugin, player, KEY, title, progress,
-                    BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
+            // CustomBuff methods read player-bound state; keep the whole calculation on the player's region.
+            player.getScheduler().run(plugin, task -> updatePlayer(player), null);
         }
+    }
+
+    private void updatePlayer(Player player) {
+        if (!player.isOnline() || !BuffBossbar.isEnabled()) {
+            return;
+        }
+        int remaining = buff.remainingSeconds(player);
+        if (remaining <= 0) {
+            BuffBossbar.hide(plugin, player, KEY);
+            return;
+        }
+        // The title mirrors FarmersDelight's own buff bars: a translatable name plus a formatted duration.
+        Component title = FarmersDelightText.translatable(buff.nameKey(),
+                FarmersDelightText.formatDuration(remaining));
+        float progress = Math.max(0f, Math.min(1f, remaining / FULL_SECONDS));
+        BuffBossbar.update(plugin, player, KEY, title, progress,
+                BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
     }
 
     /** Remove this addon's bar from one player immediately (e.g. when the buff is cleared). */

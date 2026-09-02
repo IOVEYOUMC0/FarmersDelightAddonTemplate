@@ -1,5 +1,5 @@
-# 示例附属插件控制台日志文案。语言跟随 CraftEngine 的 forced locale，其次 JVM 语言；en_us 兜底。
-# 直接编辑即可——这些文件内置在插件 jar 里，插件启用时会重新读取（需完整重启生效）。fork 时记得改 fdaddon: 前缀。
+# Example addon console messages use the CraftEngine forced locale, JVM locale, then en_us.
+# The bundled files are reread on plugin enable and require a full restart; forks must replace the fdaddon prefix.
 fdaddon:
   farmersdelight_unavailable: "FarmersDelight 不可用；附属功能已禁用。"
   api_version: "FarmersDelight api v{version}（station-query={station_query}）。"

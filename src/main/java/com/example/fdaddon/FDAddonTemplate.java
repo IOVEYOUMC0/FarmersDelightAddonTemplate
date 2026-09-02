@@ -24,6 +24,7 @@ import com.huidu.farmersdelight.api.item.FarmersDelightItems;
 import com.huidu.farmersdelight.api.recipe.FarmersDelightRecipeDiscovery;
 import com.huidu.farmersdelight.api.recipe.FarmersDelightRecipes;
 import com.huidu.farmersdelight.api.recipe.RecipeInfo;
+import com.huidu.farmersdelight.api.resource.CraftEngineResources;
 import com.huidu.farmersdelight.api.scheduler.ApiTask;
 import com.huidu.farmersdelight.api.text.FarmersDelightMessages;
 import com.huidu.farmersdelight.api.text.FarmersDelightText;
@@ -93,7 +94,8 @@ public final class FDAddonTemplate extends JavaPlugin {
         }
         // Copy this addon's bundled CraftEngine resources into plugins/CraftEngine/resources/<namespace>/
         // (install-if-missing). Do this in onLoad so the files exist before CraftEngine scans them.
-        AddonResources.release(this);
+        CraftEngineResources.release(this, NS,
+                getConfig().getBoolean("craftengine-resources.auto-completion", true));
 
         // Register a WorldGuard StateFlag so admins can gate your custom block per region. FD's
         // ProtectionCompat maps it across FD's flags plus every AntiGriefLib-backed land plugin, so the
