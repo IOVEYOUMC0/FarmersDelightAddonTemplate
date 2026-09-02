@@ -14,7 +14,7 @@ Your addon   ── bundles CraftEngine YAML  +  Java glue that calls the Farmer
 
 三个部分，三种职责：
 
-1. **CraftEngine YAML**（`src/main/resources/craftengine/<namespace>/`）—— 你的物品、方块、食物方块、配方、GUI、图片、翻译。`AddonResources` 会在首次加载时将它们复制到 `plugins/CraftEngine/resources/<namespace>/`（缺失则安装）。
+1. **CraftEngine YAML**（`src/main/resources/craftengine/<namespace>/`）—— 你的物品、方块、食物方块、配方、GUI、图片、翻译。`CraftEngineResources` 会在首次加载时将它们复制到 `plugins/CraftEngine/resources/<namespace>/`（缺失则安装）。
 2. **FarmersDelight API**（`FarmersDelightApi`）—— CraftEngine 单独无法完成的部分：炖锅 / 切菜板配方、游戏内配方书、Folia 安全调度、热源查询、合成经验。
 3. **你的 Java 代码** —— 玩法粘合层。参见 [`FDAddonTemplate.java`](src/main/java/com/example/fdaddon/FDAddonTemplate.java)。
 

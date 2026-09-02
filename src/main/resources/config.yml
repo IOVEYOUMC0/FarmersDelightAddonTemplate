@@ -1,5 +1,10 @@
 # Example addon configuration. Edit and run /fd reload all to apply.
 
+# First startup extracts bundled CraftEngine resources. Keep auto-completion true to restore files deleted
+# later; set it false to leave an existing resource directory exactly as the server owner edited it.
+craftengine-resources:
+  auto-completion: true
+
 # Item-id -> duration (in seconds) mappings for FarmersDelight's food effects.
 # Comfort: heals 1 HP on an interval while the player's saturation is 0 (slow regen while unsaturated).
 # Nourishment: zeroes the player's exhaustion, suppressing hunger drain. (Comfort and Nourishment are

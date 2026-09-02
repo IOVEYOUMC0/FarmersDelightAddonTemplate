@@ -46,7 +46,7 @@ public final class ExampleRecipeFiller implements RecipeFiller {
         if (!canFill) {
             return false;
         }
-        // A real filler would now remove one matching item per ingredient and place it into the station.
+        // A real filler removes one matching item per ingredient and places it into the station.
         return true;
     }
 
