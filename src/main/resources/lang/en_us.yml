@@ -7,7 +7,6 @@ fdaddon:
   enabled: "FDAddonTemplate enabled."
   reloaded: "Reloaded with FarmersDelight (reason: {reason})."
   advancements_disabled: "Example advancements disabled (UltimateAdvancementAPI not loaded)."
-  advancements_registered: "Example advancements registered."
   advancements_registration_failed: "Example advancements registration failed."
   config_update_failed: "config.yml could not be updated: {error}"
   config_backup_failed: "config.yml was not backed up: {error}"

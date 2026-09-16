@@ -1,0 +1,63 @@
+# Builds this addon against a freshly built FarmersDelight api jar.
+#
+# This addon is a Gradle composite build: settings.gradle.kts includes ../FarmersDelight, so building
+# it also builds FarmersDelight's :apiJar and stages it into libs/. Nothing is copied by hand -- which
+# is the point, five hand-copied stubs are exactly how the api jar used to go stale unnoticed.
+#
+# So CI only has to put FarmersDelight next to this repository (it also supplies the CraftEngine jars
+# referenced as ../FarmersDelight/libs/...); `gradlew build` does the rest, and an api change that
+# breaks this addon fails right here.
+#
+# IOVEYOUMC0/Farmersdelight is a PRIVATE repository, so the checkout below needs a token:
+#   1. Create a PAT with read access to that repo (fine-grained: Contents -> Read-only).
+#   2. Add it to THIS repository as an Actions secret named FD_REPO_TOKEN.
+# Without it the FarmersDelight checkout fails with a 404 -- GitHub reports a missing private repo the
+# same way it reports one that does not exist, so a 404 here almost always means the secret, not the URL.
+#
+# Note: secrets are not exposed to pull requests opened from forks, so that job will fail this step.
+# Fine while these repos take no outside PRs; if that changes, gate the job on
+# github.event.pull_request.head.repo.full_name == github.repository.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Build & test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout FDAddonTemplate
+        uses: actions/checkout@v4
+        with:
+          path: FDAddonTemplate
+
+      - name: Checkout FarmersDelight (sibling, provides the api jar + CraftEngine jars)
+        uses: actions/checkout@v4
+        with:
+          repository: IOVEYOUMC0/Farmersdelight
+          path: FarmersDelight
+          token: ${{ secrets.FD_REPO_TOKEN }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Build & test
+        working-directory: FDAddonTemplate
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build --no-daemon --stacktrace
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-FDAddonTemplate
+          path: FDAddonTemplate/build/reports/tests/test/
+          if-no-files-found: ignore

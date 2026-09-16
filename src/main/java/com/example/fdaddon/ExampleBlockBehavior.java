@@ -1,8 +1,7 @@
 package com.example.fdaddon;
 
-import com.example.fdaddon.util.CraftEngineCompat;
+import com.huidu.farmersdelight.api.block.CraftEngineBlockAccess;
 import com.huidu.farmersdelight.api.util.ProtectionCompat;
-import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
@@ -84,7 +83,7 @@ public final class ExampleBlockBehavior extends BlockBehavior implements EntityB
         }
         // Look up the block entity at the clicked position and act on OUR controller. Per-block state never
         // lives on this singleton behavior — it lives in (and persists with) the block entity.
-        CEWorld ceWorld = CraftEngineCompat.getCEWorld(BukkitWorldManager.instance(), player.getWorld().getUID());
+        CEWorld ceWorld = CraftEngineBlockAccess.getCEWorld(player.getWorld());
         if (ceWorld == null) {
             return InteractionResult.PASS;
         }
