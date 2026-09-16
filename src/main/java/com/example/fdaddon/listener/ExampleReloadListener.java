@@ -2,7 +2,7 @@ package com.example.fdaddon.listener;
 
 import com.example.fdaddon.FDAddonTemplate;
 import com.huidu.farmersdelight.api.event.FarmersDelightReloadEvent;
-import net.momirealms.craftengine.bukkit.api.event.CraftEngineReloadEvent;
+import com.huidu.farmersdelight.api.event.FarmersDelightWarmupEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
@@ -33,11 +33,15 @@ public final class ExampleReloadListener implements Listener {
     }
 
     /**
-     * Fired by CraftEngine when items and blocks are loaded. CE item ids resolve during this event, so
-     * recipes that reference custom items can be registered here.
+     * Register recipes here, NOT in CraftEngine's own reload event.
+     *
+     * <p>When CraftEngine broadcasts CraftEngineReloadEvent its items are not built yet, so
+     * {@code FarmersDelightItems.create} still returns null and any recipe referencing a custom item is
+     * silently dropped. FarmersDelight waits for readiness and then broadcasts this event; every real
+     * addon uses it (see EndsDelight.onFarmersDelightWarmup or BrewinWarmupListener).
      */
     @EventHandler
-    public void onCraftEngineReload(CraftEngineReloadEvent event) {
+    public void onFarmersDelightWarmup(FarmersDelightWarmupEvent event) {
         plugin.registerRecipes();
     }
 }

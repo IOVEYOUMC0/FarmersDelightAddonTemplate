@@ -14,6 +14,7 @@ import com.example.fdaddon.util.ExampleConfigBootstrap;
 import com.example.fdaddon.util.ExampleFoodEffectRegistrar;
 import com.example.fdaddon.util.ExampleTooltipCustomizer;
 import com.huidu.farmersdelight.api.FarmersDelightApi;
+import com.huidu.farmersdelight.api.recipe.ChanceResult;
 import com.huidu.farmersdelight.api.block.CookingPotSnapshot;
 import com.huidu.farmersdelight.api.block.FarmersDelightBlocks;
 import com.huidu.farmersdelight.api.buff.CustomBuffRegistry;
@@ -80,7 +81,7 @@ public final class FDAddonTemplate extends JavaPlugin {
     private final ExampleConfigBootstrap configBootstrap = new ExampleConfigBootstrap(this);
     private final ExampleFoodEffectRegistrar foodEffects = new ExampleFoodEffectRegistrar();
     private final ExampleCustomBuff exampleBuff = new ExampleCustomBuff();
-    private final ExampleItemDisplayManager displays = new ExampleItemDisplayManager();
+    private ExampleItemDisplayManager displays;
     private ExampleBuffBossbar buffBossbar;
     private ApiTask buffBossbarTask;
 
@@ -106,8 +107,23 @@ public final class FDAddonTemplate extends JavaPlugin {
         }
     }
 
+    /** JVM-lifetime guard against /reload + hot disable (property persists across classloader recreation). */
+    private static final String RELOAD_GUARD_PROPERTY = "fdaddon.enabled.in.this.jvm";
+
     @Override
     public void onEnable() {
+        if (System.getProperty(RELOAD_GUARD_PROPERTY) != null) {
+            getLogger().severe("==================================================================");
+            getLogger().severe(" PLEASE DO NOT /reload OR HOT-DISABLE this addon.");
+            getLogger().severe(" CraftEngine behaviors are registered in onLoad and stay bound");
+            getLogger().severe(" to the old classloader, so a re-enable runs half-wired.");
+            getLogger().severe(" To apply config changes: /stop then start the server again.");
+            getLogger().severe("==================================================================");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        System.setProperty(RELOAD_GUARD_PROPERTY, "1");
+
         saveDefaultConfig();
         // Resolve console-message language from the bundled lang files before any addon log line is emitted.
         AddonLang.init(this);
@@ -116,8 +132,13 @@ public final class FDAddonTemplate extends JavaPlugin {
         configBootstrap.updateConfig();
 
         // ALWAYS guard api use with isAvailable(): it's true only when FarmersDelight is present + enabled.
+        // Disable, do not merely return. onLoad already handed this addon's block and furniture behaviors
+        // to CraftEngine, so the blocks still work for players -- but with no listeners registered their
+        // GUIs open with nothing cancelling clicks or writing edits back, which is an item duplication
+        // bug. A half-enabled addon is worse than a disabled one.
         if (!FarmersDelightApi.get().isAvailable()) {
             getLogger().warning(AddonLang.get("fdaddon.farmersdelight_unavailable"));
+            getServer().getPluginManager().disablePlugin(this);
             return;
         }
         // Count this addon's CraftEngine blocks in FarmersDelight's block-state usage report.
@@ -180,8 +201,9 @@ public final class FDAddonTemplate extends JavaPlugin {
         buffBossbarTask = FarmersDelightApi.get().runRepeating(buffBossbar::tick, 20L, 10L);
 
         // 8) Packet item displays: floating items rendered to nearby players with no real entity. The manager
-        //    also listens for /fd cleanup so its displays are not swept as orphans, so register it as a listener.
-        getServer().getPluginManager().registerEvents(displays, this);
+        //    keeps them in a DisplayGroup, which declares the handles live for the /fd cleanup orphan
+        //    sweep, so there is no listener to register here.
+        displays = new ExampleItemDisplayManager(this);
 
         // 9) FarmersDelight lifecycle event bridges: cleanup / migrate / warmup / cooking-experience.
         getServer().getPluginManager().registerEvents(
@@ -212,7 +234,7 @@ public final class FDAddonTemplate extends JavaPlugin {
             for (Player p : getServer().getOnlinePlayers()) {
                 if (buffBossbar != null) buffBossbar.hide(p);
             }
-            displays.hideAll();
+            if (displays != null) displays.hideAll();
             foodEffects.clear();
             ExampleAdvancements.unregister();
         }
@@ -254,15 +276,19 @@ public final class FDAddonTemplate extends JavaPlugin {
                     "meals");                                      // category
         }
 
-        // Cutting-board recipe: input + tool (both recipe-syntax), one or more result stacks.
+        // Cutting-board recipe: input + tool (both recipe-syntax), one or more results. Each result
+        // carries its own drop chance in [0,1]; 1.0 is guaranteed. Register through this method even
+        // when everything is guaranteed, so adding a chance later is a value change and not a rewrite.
         ItemStack plank = FarmersDelightItems.create("minecraft:oak_planks");
-        if (plank != null) {
+        ItemStack stick = FarmersDelightItems.create("minecraft:stick");
+        if (plank != null && stick != null) {
             plank.setAmount(2);
-            api.registerCuttingBoardRecipe(
+            api.registerCuttingBoardRecipeWithChances(
                     NS + ":example_cut",
                     "minecraft:oak_log",       // input
                     "#minecraft:axes",         // tool (tag)
-                    List.of(plank),            // results
+                    List.of(new ChanceResult(plank, 1.0f),   // always drops
+                            new ChanceResult(stick, 0.25f)), // drops one time in four
                     "minecraft:block.wood.break"); // sound (null = default knife sound)
         }
     }
@@ -391,10 +417,13 @@ public final class FDAddonTemplate extends JavaPlugin {
         if (where.getWorld() == null) {
             return;
         }
+        if (displays == null) {
+            return;
+        }
         String anchor = where.getWorld().getUID() + ";" + where.getBlockX() + ";"
                 + where.getBlockY() + ";" + where.getBlockZ();
         displays.show(anchor, where, item);
-        // Later: displays.update(anchor, movedLocation, item) to move it, displays.hide(anchor) to remove it.
+        // Calling show again with the same anchor moves or re-items it; displays.hide(anchor) removes it.
     }
 
     /** Encode a fill level into a CraftEngine item's damage bar and hide the numeric durability line. */
