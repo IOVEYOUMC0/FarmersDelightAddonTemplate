@@ -19,7 +19,23 @@ repositories {
 
 // The FarmersDelight api.** facade jar is prebuilt (from the closed-source FarmersDelight repo's :apiJar
 // task) and committed into libs/, so this addon builds without any access to the FarmersDelight source.
-// When the main plugin publishes a new API, replace libs/farmersdelight-1.0.0.jar and bump the version.
+// When the main plugin publishes a new API, replace libs/farmersdelight-api.jar and bump the version.
+
+// Builds FarmersDelight's :apiJar through the composite build and stages it into libs/, so this addon
+// always compiles against the current api.** facade. Requires ../FarmersDelight to be checked out
+// alongside this repository (CI does that too).
+val syncFarmersDelightApi by tasks.registering(Copy::class) {
+    group = "build"
+    description = "Builds farmersdelight :apiJar via composite build and stages it into libs/."
+    dependsOn(gradle.includedBuild("farmersdelight-plugin").task(":apiJar"))
+    from(file("../FarmersDelight/build/libs")) {
+        include("farmersdelight-plugin-*-api.jar")
+        rename { "farmersdelight-api.jar" }
+    }
+    into("libs")
+}
+
+tasks.compileJava { dependsOn(syncFarmersDelightApi) }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
@@ -33,7 +49,7 @@ dependencies {
     // stable names. This is an API-ONLY stub jar (just `com.huidu.farmersdelight.api.**`, no internals,
     // not a runnable plugin) — committed in libs/.
     // At runtime the real FarmersDelight plugin (a server dependency) provides the implementation.
-    compileOnly(files("libs/farmersdelight-1.0.0.jar"))
+    compileOnly(files("libs/farmersdelight-api.jar"))
 }
 
 java {
@@ -49,7 +65,7 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.processResources {
     filteringCharset = "UTF-8"
-    filesMatching("plugin.yml") { expand("version" to version) }
+    filesMatching("paper-plugin.yml") { expand("version" to version) }
 }
 
 tasks.shadowJar {

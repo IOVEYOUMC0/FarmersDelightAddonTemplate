@@ -70,10 +70,8 @@ public final class ExampleAdvancements {
                         "challenge", 2, 0, SAMPLER_PLATTER_CRITERIA)
                 .register();
 
-        if (log != null) {
-            log.info(ok
-                    ? AddonLang.get("fdaddon.advancements_registered")
-                    : AddonLang.get("fdaddon.advancements_registration_failed"));
+        if (!ok && log != null) {
+            log.warning(AddonLang.get("fdaddon.advancements_registration_failed"));
         }
         return ok;
     }

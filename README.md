@@ -132,7 +132,7 @@ Helper + event classes (also under `api.**`):
   meter — see `util/ExampleTooltipCustomizer`), and the cross-version shims `CompatAttributes` (resolves
   `MAX_HEALTH` / `ATTACK_SPEED` across the 1.21.2 attribute-registry rename — null-check the constant before
   `getAttribute`) and `CompatItemMeta` (`setItemModel` / `isSupported`, applying the `item_model` component on
-  1.21.4+ and no-op on 1.21 / 1.21.1). Use these shared shims instead of keeping your own copy.
+  1.21.4+, which is the supported floor). Use these shared shims instead of keeping your own copy.
 - `api.config.*` — `ConfigFileUpdater` + `ConfigUpdatePolicy` + `ConfigUpdateReport` + `ConfigKeyRename`:
   keep the `config.yml` an operator already has in step with the one your build ships (covered under
   "More API surface").

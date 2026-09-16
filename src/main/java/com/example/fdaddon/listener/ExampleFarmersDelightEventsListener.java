@@ -49,9 +49,10 @@ public final class ExampleFarmersDelightEventsListener implements Listener {
     }
 
     /**
-     * Fired after a /fd migration ran. Gate on the migration key so you only act on migrations you own, then
-     * migrate your own legacy data and report how many entries you converted. The accessor is migrationKey(),
-     * with no get prefix.
+     * Nothing fires this event today: FarmersDelight has no migration command left, so a handler registered
+     * now is never invoked. It stays here because the event is stable public API and a migration may ship
+     * later, and because gating on the migration key is the pattern to copy when one does. Do not build
+     * anything that depends on it running. The accessor is migrationKey(), with no get prefix.
      */
     @EventHandler
     public void onMigrate(FarmersDelightMigrateEvent event) {

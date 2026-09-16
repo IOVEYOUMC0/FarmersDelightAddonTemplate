@@ -6,7 +6,6 @@ fdaddon:
   enabled: "FDAddonTemplate 已启用。"
   reloaded: "已随 FarmersDelight 重载（原因：{reason}）。"
   advancements_disabled: "示例成就已禁用（未加载 UltimateAdvancementAPI）。"
-  advancements_registered: "示例成就已注册。"
   advancements_registration_failed: "示例成就注册失败。"
   config_update_failed: "config.yml 更新失败：{error}"
   config_backup_failed: "config.yml 备份失败：{error}"

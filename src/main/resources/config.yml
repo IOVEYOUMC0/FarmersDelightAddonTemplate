@@ -1,3 +1,8 @@
+# Config generation. Bumped by the developer whenever a key is renamed, retired or changes
+# meaning; the plugin stamps it onto your file after updating and refuses to touch a file that
+# declares a NEWER generation than the running build. Do not edit by hand.
+config-version: 1
+
 # Example addon configuration. Edit and run /fd reload all to apply.
 
 # First startup extracts bundled CraftEngine resources. Keep auto-completion true to restore files deleted

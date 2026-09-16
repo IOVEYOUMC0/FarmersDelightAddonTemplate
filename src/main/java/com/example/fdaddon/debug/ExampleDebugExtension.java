@@ -1,12 +1,11 @@
 package com.example.fdaddon.debug;
 
+import com.huidu.farmersdelight.api.block.CraftEngineBlockAccess;
 import com.example.fdaddon.ExampleBlockEntityController;
 import com.example.fdaddon.FDAddonTemplate;
-import com.example.fdaddon.util.CraftEngineCompat;
 import com.huidu.farmersdelight.api.util.DebugToolExtension;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
 import net.momirealms.craftengine.core.util.Key;
@@ -104,7 +103,7 @@ public final class ExampleDebugExtension implements DebugToolExtension {
     @Override
     public int activate(Player player) {
         if (player == null) return 0;
-        CEWorld ceWorld = CraftEngineCompat.getCEWorld(BukkitWorldManager.instance(), player.getWorld().getUID());
+        CEWorld ceWorld = CraftEngineBlockAccess.getCEWorld(player.getWorld());
         if (ceWorld == null) return 0;
 
         int activated = 0;
