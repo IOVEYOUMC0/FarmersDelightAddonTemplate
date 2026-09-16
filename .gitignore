@@ -7,7 +7,7 @@ out/
 # Vendored FarmersDelight api facade jar (compile-only). Prebuilt from the FarmersDelight repo's :apiJar
 # task and committed, so the addon builds without access to the closed-source FarmersDelight source.
 libs/*
-!libs/farmersdelight-1.0.0.jar
+!libs/farmersdelight-api.jar
 
 .idea/
 *.iml
