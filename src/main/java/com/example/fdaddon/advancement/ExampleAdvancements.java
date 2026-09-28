@@ -1,6 +1,7 @@
 package com.example.fdaddon.advancement;
 
 import com.example.fdaddon.util.AddonLang;
+import com.huidu.farmersdelight.api.advancement.AdvancementAvailability;
 import com.huidu.farmersdelight.api.advancement.FarmersDelightAdvancements;
 import com.huidu.farmersdelight.api.item.FarmersDelightItems;
 import org.bukkit.Material;
@@ -51,8 +52,11 @@ public final class ExampleAdvancements {
      * Returns false if UAA is missing — that's a normal soft-dep no-op, not an error.
      */
     public static boolean register(Logger log) {
-        if (!FarmersDelightAdvancements.isAvailable()) {
-            if (log != null) log.info(AddonLang.get("fdaddon.advancements_disabled"));
+        AdvancementAvailability availability = FarmersDelightAdvancements.availability();
+        if (availability != AdvancementAvailability.AVAILABLE) {
+            if (log != null) {
+                log.info(AddonLang.get("fdaddon.advancements_disabled", "reason", availability.logName()));
+            }
             return false;
         }
 
@@ -97,8 +101,7 @@ public final class ExampleAdvancements {
 
     /** Build an icon, falling back to a vanilla Material if the CraftEngine item id won't resolve. */
     private static ItemStack icon(String ceId, Material fallback) {
-        ItemStack stack = ceId == null ? null : FarmersDelightItems.create(ceId);
-        return stack != null && !stack.getType().isAir() ? stack : new ItemStack(fallback);
+        return FarmersDelightItems.createOrFallback(ceId, fallback);
     }
 
     private static String prefix(String key) {

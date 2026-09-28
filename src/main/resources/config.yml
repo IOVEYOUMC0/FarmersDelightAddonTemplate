@@ -5,8 +5,15 @@ config-version: 1
 
 # Example addon configuration. Edit and run /fd reload all to apply.
 
-# First startup extracts bundled CraftEngine resources. Keep auto-completion true to restore files deleted
-# later; set it false to leave an existing resource directory exactly as the server owner edited it.
+# Console-message language, e.g. en_us / zh_cn. Leave it empty to inherit FarmersDelight's resolved server
+# locale, so one setting drives every plugin in the family; see lang/en_us.yml for the full resolution order.
+language: ''
+
+# First startup extracts this plugin's bundled CraftEngine resources into CraftEngine/resources/<its namespace>.
+# With auto-completion true, every later startup also restores files that are missing; set it false to leave an
+# existing resource directory exactly as you edited it (the first extraction is unaffected).
+# Same name and meaning as FarmersDelight's craftengine-resources setting; each plugin only manages its own
+# namespace, so the two settings do not interact.
 craftengine-resources:
   auto-completion: true
 

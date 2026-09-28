@@ -1,0 +1,10 @@
+cutting_recipes:
+  fdaddon:example_cut:
+    input: "minecraft:oak_log"
+    tool: "#minecraft:axes"
+    results:
+      - item: "minecraft:oak_planks"
+        count: 2
+      - item: "minecraft:stick"
+        count: 1
+        chance: 0.25

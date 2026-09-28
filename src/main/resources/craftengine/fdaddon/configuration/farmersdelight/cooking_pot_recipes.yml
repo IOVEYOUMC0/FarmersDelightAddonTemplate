@@ -1,0 +1,20 @@
+cooking_recipes:
+  fdaddon:example_stew:
+    ingredients:
+      - "minecraft:carrot"
+      - "minecraft:potato"
+      - "#minecraft:rabbit"
+    container: "minecraft:bowl"
+    result: "minecraft:rabbit_stew"
+    experience: 1.0
+    cook-time: 200
+    category: "meals"
+  fdaddon:example_jerky_meal:
+    ingredients:
+      - "fdaddon:example_jerky"
+      - "minecraft:baked_potato"
+      - "minecraft:bowl"
+    result: "fdaddon:example_jerky"
+    experience: 0.35
+    cook-time: 200
+    category: "misc"

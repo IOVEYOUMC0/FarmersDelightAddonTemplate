@@ -5,6 +5,7 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -48,11 +49,15 @@ public final class ExampleFoodEffectRegistrar {
         registeredNourishment.clear();
     }
 
+    public int registeredCount() {
+        return registeredComfort.size() + registeredNourishment.size();
+    }
+
     private void loadList(ConfigurationSection root, String key, boolean comfort) {
         List<?> raw = root.getList(key);
         if (raw == null) return;
         for (Object entry : raw) {
-            if (!(entry instanceof java.util.Map<?, ?> map)) continue;
+            if (!(entry instanceof Map<?, ?> map)) continue;
             Object idObj = map.get("id");
             Object durObj = map.get("duration");
             if (!(idObj instanceof String id) || id.isBlank()) continue;

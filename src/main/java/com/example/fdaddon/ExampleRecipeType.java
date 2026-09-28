@@ -1,6 +1,7 @@
 package com.example.fdaddon;
 
 import com.example.fdaddon.recipe.ExampleRecipeEditor;
+import com.example.fdaddon.util.AddonLang;
 import com.huidu.farmersdelight.api.item.FarmersDelightItems;
 import com.huidu.farmersdelight.api.recipe.JumpTarget;
 import com.huidu.farmersdelight.api.recipe.RecipeBookLayout;
@@ -8,7 +9,7 @@ import com.huidu.farmersdelight.api.recipe.RecipeEditor;
 import com.huidu.farmersdelight.api.recipe.RecipeType;
 import com.huidu.farmersdelight.api.recipe.ViewableRecipe;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -43,7 +44,7 @@ public final class ExampleRecipeType implements RecipeType {
 
     @Override
     public Component title() {
-        return Component.text("Example Recipes", NamedTextColor.GOLD);
+        return text("fdaddon.example_recipe.title");
     }
 
     @Override
@@ -76,7 +77,7 @@ public final class ExampleRecipeType implements RecipeType {
     public RecipeBookLayout listLayout() {
         // A paginated grid of recipes + page/back buttons. 'R' = recipe slot (filled by FD from recipes()).
         return new Layout(
-                Component.text("Example Recipes", NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false),
+                text("fdaddon.example_recipe.list_title"),
                 6,
                 List.of("RRRRRRRRR",
                         "RRRRRRRRR",
@@ -86,9 +87,9 @@ public final class ExampleRecipeType implements RecipeType {
                         "PXXXBXXXN"),
                 Map.of('R', "recipe", 'P', "prev_page", 'N', "next_page", 'B', "back", 'X', "background"),
                 Map.of("background", filler(Material.GRAY_STAINED_GLASS_PANE),
-                        "prev_page", named(Material.ARROW, "Previous"),
-                        "next_page", named(Material.ARROW, "Next"),
-                        "back", named(Material.BARRIER, "Close")));
+                        "prev_page", named(Material.ARROW, text("fdaddon.example_recipe.prev_page")),
+                        "next_page", named(Material.ARROW, text("fdaddon.example_recipe.next_page")),
+                        "back", named(Material.BARRIER, text("fdaddon.example_recipe.close"))));
     }
 
     @Override
@@ -96,7 +97,7 @@ public final class ExampleRecipeType implements RecipeType {
         // One recipe: 'I' ingredients, 'R' result, 'T' a CUSTOM role filled from displaySlots() below,
         // plus back/fill buttons. Any legend char that isn't a known/dynamic role is static decoration.
         return new Layout(
-                Component.text("Example Recipe", NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false),
+                text("fdaddon.example_recipe.detail_title"),
                 6,
                 List.of("XXXXXXXXX",
                         "XIIIXTXRX",
@@ -106,8 +107,8 @@ public final class ExampleRecipeType implements RecipeType {
                         "XXXXBXFXX"),
                 Map.of('I', "ingredient", 'R', "result", 'T', "tool", 'F', "fill", 'B', "back", 'X', "background"),
                 Map.of("background", filler(Material.GRAY_STAINED_GLASS_PANE),
-                        "fill", named(Material.HOPPER, "Fill ingredients"),
-                        "back", named(Material.ARROW, "Back")));
+                        "fill", named(Material.HOPPER, text("fdaddon.example_recipe.fill")),
+                        "back", named(Material.ARROW, text("fdaddon.example_recipe.back"))));
     }
 
     /** One viewable recipe: inputs, a result, optional info lines, and optional custom display slots. */
@@ -136,8 +137,7 @@ public final class ExampleRecipeType implements RecipeType {
 
         @Override
         public List<Component> infoLines(Player viewer) {
-            return List.of(Component.text("Cook in a cooking pot.", NamedTextColor.GRAY)
-                    .decoration(TextDecoration.ITALIC, false));
+            return List.of(text("fdaddon.example_recipe.description"));
         }
 
         @Override
@@ -165,6 +165,15 @@ public final class ExampleRecipeType implements RecipeType {
             implements RecipeBookLayout {
     }
 
+    /**
+     * Player-visible text from this addon's language layer, so the book follows the server locale like every
+     * other message. MiniMessage tags in the yml value are parsed here.
+     */
+    private static Component text(String key) {
+        return MiniMessage.miniMessage().deserialize(AddonLang.get(key))
+                .decoration(TextDecoration.ITALIC, false);
+    }
+
     private static ItemStack filler(Material material) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
@@ -176,11 +185,11 @@ public final class ExampleRecipeType implements RecipeType {
         return item;
     }
 
-    private static ItemStack named(Material material, String name) {
+    private static ItemStack named(Material material, Component name) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(Component.text(name).decoration(TextDecoration.ITALIC, false));
+            meta.displayName(name);
             item.setItemMeta(meta);
         }
         return item;

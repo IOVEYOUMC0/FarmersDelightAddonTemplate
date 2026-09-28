@@ -7,8 +7,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
- * Bridges FarmersDelight's and CraftEngine's reload events to this addon's reload routine, so a single
- * /fd reload all (or /ce reload) re-syncs everything — the addon needs no own command.
+ * Bridges FarmersDelight's reload and warmup events to this addon, so a single /fd reload all re-syncs
+ * everything — the addon needs no own command.
  *
  * Why a separate class (vs. handling on the plugin main):
  * - Keeps listener registration explicit in onEnable — easier to disable temporarily.
@@ -33,15 +33,17 @@ public final class ExampleReloadListener implements Listener {
     }
 
     /**
-     * Register recipes here, NOT in CraftEngine's own reload event.
+     * Fired once CraftEngine has built its items. This is where anything item-dependent belongs — most
+     * commonly registering a recipe that must be decided at runtime (a static one belongs in this addon's
+     * pack instead; see the recipe comment in the plugin main).
      *
-     * <p>When CraftEngine broadcasts CraftEngineReloadEvent its items are not built yet, so
-     * FarmersDelightItems.create still returns null and any recipe referencing a custom item is
-     * silently dropped. FarmersDelight waits for readiness and then broadcasts this event; every real
-     * addon uses it (see EndsDelight.onFarmersDelightWarmup or BrewinWarmupListener).
+     * <p>Do NOT use CraftEngine's own reload event for this: when CraftEngine broadcasts
+     * CraftEngineReloadEvent its items are not built yet, so FarmersDelightItems.create still
+     * returns null and any recipe referencing a custom item is silently dropped. FarmersDelight waits for
+     * readiness and then broadcasts this event; every real addon uses it (see EndsDelight's warmup handler
+     * or BrewinAndChewin's BrewinWarmupListener).
      */
     @EventHandler
     public void onFarmersDelightWarmup(FarmersDelightWarmupEvent event) {
-        plugin.registerRecipes();
     }
 }

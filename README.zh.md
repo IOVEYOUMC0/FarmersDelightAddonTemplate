@@ -28,9 +28,9 @@ FarmersDelight 以**混淆**形式发布 —— ProGuard 会重命名 / 重新�
 
 ## 构建配置
 
-1. 构建 FarmersDelight 的 **api-only 桩 jar**（在 FarmersDelight 仓库中执行 `gradlew apiJar`），并将 `build/libs/farmersdelight-plugin-*-api.jar` 复制到本项目的 **`libs/`** 目录、重命名为 `farmersdelight-api-1.0.0.jar`（仅编译期、被 gitignore 忽略）。它**只含** `com.huidu.farmersdelight.api.**` —— 不含 FD 内部类、不是可运行插件；真正的 FarmersDelight 插件会在运行时提供实现。
-2. `./gradlew shadowJar` → `build/libs/fdaddontemplate-1.0.0.jar`。
-3. 将该 jar 放入 `plugins/` 目录，与 FarmersDelight + CraftEngine 并列。`plugin.yml` 中的 `depend:` 可确保加载顺序。
+1. 将 FarmersDelight 仓库检出为**同级目录**（`../FarmersDelight`）。本项目是 Gradle 复合构建：`settings.gradle.kts` 把它 include 进来，所以 `gradlew` 会构建 FarmersDelight 的 `:apiJar` 并暂存到本项目的 **`libs/farmersdelight-api.jar`**（仅编译期、被 gitignore 忽略）。该 jar **只含** `com.huidu.farmersdelight.api.**` —— 不含 FD 内部类、不是可运行插件；真正的 FarmersDelight 插件会在运行时提供实现。
+2. `./gradlew build`（或 `shadowJar`）→ **`build/libs/fdaddontemplate-1.0.0.jar`**。
+3. 将该 jar 放入 `plugins/` 目录，与 FarmersDelight + CraftEngine 并列。本插件使用 `paper-plugin.yml`，其中的 `dependencies.server` 条目（`CraftEngine` 与 `FarmersDelight`，均为 `load: BEFORE`、`required: true`、`join-classpath: true`）负责加载顺序与类路径访问。
 
 ## `FarmersDelightApi` 参考
 
@@ -325,14 +325,14 @@ boolean has = FarmersDelightKnifeDrops.hasRule("cow");      // 来自任意来�
 
 ## 重载由 FarmersDelight 驱动
 
-你的扩展**不需要自己的命令**。FarmersDelight 会在任何 `/fd reload <target>` 时触发 `FarmersDelightReloadEvent`；监听它并重载你的配置即可（参见示例）。你注册的配方会在重载后保留。依赖物品的配方还应在 `CraftEngineReloadEvent` 上（重新）注册（CE 物品只有在 CE 加载之后才能解析）。
+你的扩展**不需要自己的命令**。FarmersDelight 会在任何 `/fd reload <target>` 时触发 `FarmersDelightReloadEvent`；监听它并重载你的配置即可（参见示例）。声明在 CraftEngine 包里的静态炖锅 / 切菜板配方由 FarmersDelight 在每次重载时重新读取。运行期注册的配方应在 `FarmersDelightWarmupEvent` 上（重新）注册：该事件在 CraftEngine 构建完物品后触发，而 `CraftEngineReloadEvent` 早于它，任何引用自定义物品的配方都会被静默丢弃。
 
 ## CraftEngine YAML 约定（与 FarmersDelight 保持一致）
 
 - 像 FD 一样**按类型组织**：`items.yml`、`food_block.yml`、`blocks.yml`、`gui.yml`、`translations.yml`。
 - **只使用块状（block）风格** —— 不要使用内联的 `{ }` 流式映射。`item-name` / `model` 保持不加引号；仅在 YAML 必需时才加引号（以 `#` 开头的标签，或带有尾随空格时）。
 - **发布的配置中不要有注释**（本模板的注释仅用于教学）。FD 自身的配置是干净的。
-- CE 原生配方类型：`shaped`、`shapeless`、`smelting`、`smoking`、`blasting`、`campfire_cooking`、`stonecutting`。炖锅 / 切菜板配方**不是** CE 配方 —— 请通过 API 注册它们。
+- CE 原生配方类型：`shaped`、`shapeless`、`smelting`、`smoking`、`blasting`、`campfire_cooking`、`stonecutting`。炖锅 / 切菜板配方**不是** CE 配方，但同样是包内 YAML：写进 `configuration/farmersdelight/cooking_pot_recipes.yml`（根键 `cooking_recipes`）与 `configuration/farmersdelight/cutting_board_recipes.yml`（根键 `cutting_recipes`），参见模板里的两个示例文件。CraftEngine 会把这些段落交给 FarmersDelight，因此无需附属代码、会出现在配方书中，并且以数据而非 Java 的方式维护。只有必须运行期决定的配方才使用 `FarmersDelightApi.registerCookingPotRecipe` / `registerCuttingBoardRecipeWithChances`。
 - 自定义方块从其宿主状态（host state）获得碰撞箱：实心的 `auto-state` 宿主（`note_block`、`mushroom`）提供完整立方体碰撞；透明宿主（`non_tintable_leaves`）会产生碰撞，但能为非立方体模型干净地渲染；`tripwire` 无碰撞（适用于扁平的食物方块）。方块的右键 / 破坏逻辑可以是纯 CE 的 `events`（参见 FD 的 `food_block.yml`）。
 
 参见 [`configuration/items.yml`](src/main/resources/craftengine/fdaddon/configuration/items.yml) 中带注释的示例（自定义食物 + 食用时效果、对原版物品行为的覆盖、一个有序合成配方）。

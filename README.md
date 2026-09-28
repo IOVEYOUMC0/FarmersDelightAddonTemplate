@@ -34,13 +34,15 @@ FarmersDelight ships **obfuscated** — ProGuard renames/repackages everything *
 
 ## Build setup
 
-1. Build FarmersDelight's **api-only** stub (in the FarmersDelight repo: `gradlew apiJar`) and copy
-   `build/libs/farmersdelight-plugin-*-api.jar` into this project's **`libs/`** as
-   `farmersdelight-api-1.0.0.jar` (compile-only, gitignored). It contains ONLY
-   `com.huidu.farmersdelight.api.**` — no FD internals, not a runnable plugin — and the real FarmersDelight
-   plugin provides the implementation at runtime.
-2. `./gradlew shadowJar` → `build/libs/fdaddontemplate-1.0.0.jar`.
-3. Drop the jar in `plugins/` next to FarmersDelight + CraftEngine. `plugin.yml` `depend:` ensures load order.
+1. Check out the FarmersDelight repository as a **sibling** directory (`../FarmersDelight`). This project is a
+   Gradle composite build: `settings.gradle.kts` includes it, so `gradlew` builds FarmersDelight's `:apiJar`
+   and stages it into this project's **`libs/farmersdelight-api.jar`** (compile-only, gitignored). That jar
+   contains ONLY `com.huidu.farmersdelight.api.**` — no FD internals, not a runnable plugin — and the real
+   FarmersDelight plugin provides the implementation at runtime.
+2. `./gradlew build` (or `shadowJar`) → **`build/libs/fdaddontemplate-1.0.0.jar`**.
+3. Drop the jar in `plugins/` next to FarmersDelight + CraftEngine. This plugin uses `paper-plugin.yml`, whose
+   `dependencies.server` entries (`CraftEngine` and `FarmersDelight`, both `load: BEFORE`, `required: true`,
+   `join-classpath: true`) ensure load order and classpath access.
 
 ## `FarmersDelightApi` reference
 
@@ -392,9 +394,11 @@ boolean has = FarmersDelightKnifeDrops.hasRule("cow");      // from any source (
 ## Reloading is driven by FarmersDelight
 
 Your addon needs **no command of its own**. FarmersDelight fires `FarmersDelightReloadEvent` on any
-`/fd reload <target>`; listen for it and reload your config (see the example). Recipes you registered
-survive the reload. Item-dependent recipes should also (re)register on `CraftEngineReloadEvent` (CE items
-only resolve after CE has loaded).
+`/fd reload <target>`; listen for it and reload your config (see the example). Static cooking-pot /
+cutting-board recipes declared in your CraftEngine pack are re-read by FarmersDelight on every reload.
+Recipes you register at runtime should be (re)registered on `FarmersDelightWarmupEvent`, which fires once
+CraftEngine has built its items — `CraftEngineReloadEvent` fires before that, so every recipe naming a custom
+item is silently dropped.
 
 ## CraftEngine YAML conventions (match FarmersDelight)
 
@@ -403,7 +407,13 @@ only resolve after CE has loaded).
   YAML requires it (a `#`-leading tag, or a trailing space).
 - **No comments in shipping configs** (this template comments for teaching). FD's own configs are clean.
 - Native CE recipe types: `shaped`, `shapeless`, `smelting`, `smoking`, `blasting`, `campfire_cooking`,
-  `stonecutting`. Cooking-pot/cutting-board recipes are **not** CE recipes — register them via the API.
+  `stonecutting`.
+- Cooking-pot / cutting-board recipes are **not** CE recipes, but they are still pack YAML: declare them under
+  `configuration/farmersdelight/cooking_pot_recipes.yml` (root `cooking_recipes`) and
+  `configuration/farmersdelight/cutting_board_recipes.yml` (root `cutting_recipes`) — see the two example files
+  in this template. CraftEngine hands those sections to FarmersDelight, so they need no addon code, show up in
+  the recipe book, and are edited as data instead of Java. Use `FarmersDelightApi.registerCookingPotRecipe` /
+  `registerCuttingBoardRecipeWithChances` only for recipes that must be decided at runtime.
 - Custom blocks get collision from their host state: a solid `auto-state` host (`note_block`, `mushroom`)
   gives full-cube collision; a transparent host (`non_tintable_leaves`) collides but renders cleanly for
   non-cube models; `tripwire` is non-colliding (flat food blocks). Block right-click/break logic can be

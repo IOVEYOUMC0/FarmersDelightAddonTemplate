@@ -137,7 +137,8 @@ public final class ExampleFarmersDelightEventsListener implements Listener {
      * Fired when a registered custom buff's level on a player really changes — gained, lost, or moved between
      * non-zero levels (the "buff-change-event" feature). NOT fired on a mere refresh (re-drinking at the same
      * level), so a listener sees one event per real transition rather than one per tick. Gate on getBuffId()
-     * for buffs you care about. Fired on the affected player's region thread.
+     * for buffs you care about. On Folia this may be delivered on the global region thread; schedule player
+     * or entity access through the player's entity scheduler.
      */
     @EventHandler
     public void onBuffChange(FarmersDelightBuffChangeEvent event) {

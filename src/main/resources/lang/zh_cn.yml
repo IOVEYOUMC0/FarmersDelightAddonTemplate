@@ -1,15 +1,31 @@
-# Example addon console messages use the CraftEngine forced locale, JVM locale, then en_us.
-# The bundled files are reread on plugin enable and require a full restart; forks must replace the fdaddon prefix.
+# 示例附属的消息（控制台输出 + 本模板的玩家提示）。语言选择顺序：本附属 config.yml 的 language，
+# 然后 FarmersDelight 已解析的服务端语言，然后 CraftEngine 的强制语言，然后 JVM 语言，最后回退 zh_cn。
+# 随包文件在插件启用时重新读取，需要完整重启才会生效；fork 时请替换 fdaddon 前缀。
+# 值按纯文本处理（AddonLang.get 返回 String）；只有调用方显式走 MiniMessage 的文本才会解析标签，
+# 例如 ExampleRecipeType 的配方书标题与按钮。
 fdaddon:
+  example_used: "已使用这个方块 {count} 次——计数保存在方块实体里。"
   farmersdelight_unavailable: "FarmersDelight 不可用；附属功能已禁用。"
   api_version: "FarmersDelight api v{version}（station-query={station_query}）。"
   enabled: "FDAddonTemplate 已启用。"
   reloaded: "已随 FarmersDelight 重载（原因：{reason}）。"
-  advancements_disabled: "示例成就已禁用（未加载 UltimateAdvancementAPI）。"
+  recipes_loaded: "已加载 {count} 条 FarmersDelight 配方。"
+  food_effects_loaded: "已加载 {count} 个食物效果配置。"
+  advancements_disabled: "示例进度页未注册（原因：{reason}）。"
   advancements_registration_failed: "示例成就注册失败。"
   config_update_failed: "config.yml 更新失败：{error}"
   config_backup_failed: "config.yml 备份失败：{error}"
   config_key_migrated: "已将 {old} 移到 {new}。"
   config_keys_retired: "已移除不再读取的配置：{keys}"
   config_keys_merged: "已向 config.yml 新增 {count} 个配置项。"
-  resources_release_failed: "释放 CraftEngine 资源失败：{error}"
+  example_recipe:
+    title: "<gold>示例配方"
+    list_title: "<gold>示例配方"
+    detail_title: "<gold>示例配方详情"
+    description: "<gray>在厨锅中烹饪。"
+    prev_page: "<white>上一页"
+    next_page: "<white>下一页"
+    close: "<white>关闭"
+    back: "<white>返回"
+    fill: "<white>填入材料"
+

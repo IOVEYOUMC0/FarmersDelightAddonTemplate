@@ -1,5 +1,6 @@
 package com.example.fdaddon;
 
+import com.example.fdaddon.util.AddonLang;
 import com.huidu.farmersdelight.api.block.CraftEngineBlockAccess;
 import com.huidu.farmersdelight.api.util.ProtectionCompat;
 import net.momirealms.craftengine.core.block.BlockDefinition;
@@ -77,7 +78,7 @@ public final class ExampleBlockBehavior extends BlockBehavior implements EntityB
         // listen to, so gate here like FD's own stations do. ProtectionCompat checks the addon's WorldGuard
         // StateFlag (FDAddonTemplate.EXAMPLE_FLAG) plus every AntiGriefLib-backed land plugin.
         BlockPos pos = context.getClickedPos();
-        if (!com.huidu.farmersdelight.api.util.ProtectionCompat.canUse(player,
+        if (!ProtectionCompat.canUse(player,
                 player.getWorld().getBlockAt(pos.x(), pos.y(), pos.z()), FDAddonTemplate.EXAMPLE_FLAG)) {
             return InteractionResult.PASS;
         }
@@ -95,7 +96,7 @@ public final class ExampleBlockBehavior extends BlockBehavior implements EntityB
         // let(class, controllerId, action) resolves OUR controller even if the block stacks several.
         blockEntity.controller.let(ExampleBlockEntityController.class, this.controllerId,
                 controller -> { uses[0] = controller.increment(); });
-        player.sendMessage("Used this block " + uses[0] + " time(s) — saved in the block entity.");
+        player.sendMessage(AddonLang.get("fdaddon.example_used", "count", uses[0]));
         return InteractionResult.SUCCESS_AND_CANCEL; // handled; cancel the vanilla interaction
     }
 
