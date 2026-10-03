@@ -4,11 +4,11 @@ bin/
 out/
 *.class
 
-# The FarmersDelight api facade jar (compile-only). It is the output of the composite build's apiJar
-# sync, committed so the api surface this template compiles against is visible in the tree; every build
-# rewrites it. Nothing else may live under libs/.
-libs/*
-!libs/farmersdelight-api.jar
+# The FarmersDelight api is now a normal dependency (com.huidu.farmersdelight:farmersdelight-plugin),
+# resolved from the sibling ../FarmersDelight checkout or, without it, from a Gradle source dependency
+# on the git repository -- see settings.gradle.kts. Nothing has to be vendored under libs/ any more;
+# the directory is ignored so a local copy can never creep back into the tree.
+libs/
 
 .idea/
 *.iml

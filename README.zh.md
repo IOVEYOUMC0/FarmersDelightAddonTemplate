@@ -29,7 +29,11 @@ FarmersDelight 现在**不做混淆**（整个插件就是一份开源构建）�
 
 ## 构建配置
 
-1. 将 FarmersDelight 仓库检出为**同级目录**（`../FarmersDelight`）。本项目是 Gradle 复合构建：`settings.gradle.kts` 把它 include 进来，所以 `gradlew` 会构建 FarmersDelight 的 `:apiJar` 并暂存到本项目的 **`libs/farmersdelight-api.jar`** —— 这是构建会重新生成的、仅编译期的产物，不要手改也不要手工同步。该 jar **只含** `com.huidu.farmersdelight.api.**` —— 不含 FD 内部类、不是可运行插件；真正的 FarmersDelight 插件会在运行时提供实现。
+1. FarmersDelight API 现在是普通依赖，在 `settings.gradle.kts` 中声明为 `com.huidu.farmersdelight:farmersdelight-plugin:<version>`，有两条通道：
+   * **本地检出（首选）**：把 FarmersDelight 仓库检出为**同级目录**（`../FarmersDelight`）。此时本项目是 Gradle 复合构建：`settings.gradle.kts` 把它 include 进来，`gradlew` 会构建它的 `:apiJar` 并用该产物替换上述坐标。无需拉取，可离线工作。
+   * **无本地检出**：同级目录不存在时，Gradle 退回到对 `https://github.com/IOVEYOUMC0/Farmersdelight-Plugin.git` 的 source dependency，按固定版本检出、就地构建并以同样方式解析。**这条通道需要网络。**
+
+   两条通道拿到的都是 api-only jar，**只含** `com.huidu.farmersdelight.api.**` —— 不含 FD 内部类、不是可运行插件；真正的 FarmersDelight 插件会在运行时提供实现。不再需要把 jar 放进 `libs/` 手工同步。
 2. `./gradlew build`（或 `shadowJar`）→ **`build/libs/fdaddontemplate-1.0.1.jar`**。
 3. 将该 jar 放入 `plugins/` 目录，与 FarmersDelight + CraftEngine 并列。本插件使用 `paper-plugin.yml`，其中的 `dependencies.server` 条目（`CraftEngine` 与 `FarmersDelight`，均为 `load: BEFORE`、`required: true`、`join-classpath: true`）负责加载顺序与类路径访问。
 
@@ -87,7 +91,7 @@ boolean hasStationQuery = apiVersion >= 1 && FarmersDelightApi.get().hasFeature(
 - **发包物品显示** —— `FarmersDelightApi.createItemDisplay` / `updateItemDisplay` / `removeItemDisplay`：向附近玩家展示的悬浮物品，不生成真实实体。保存返回的 int 句柄，区块加载时重建，并在 `FarmersDelightCollectLiveDisplaysEvent` 上上报它们，使 `/fd cleanup` 不会清除。见 `display/ExampleItemDisplayManager`。
 - `api.scheduler.ApiTask` —— 重复任务的取消句柄。
 - `api.event.*` —— `FarmersDelightReloadEvent`、`FarmersDelightProduceEvent`、`ProfessionCookingExperienceEvent`，玩法通知 `FarmersDelightCookStartEvent`（空闲→烹饪的边沿，ProduceEvent 的对端）、`FarmersDelightHarvestEvent`（蘑菇簇 / 稻米的 Java 采收）、`FarmersDelightBuffChangeEvent`（自定义 buff 的真实等级跃迁，非刷新）、`FarmersDelightRecipeDiscoveryEvent`（逐玩家的配方锁定 / 解锁跃迁），以及管理 / 生命周期桥接 `FarmersDelightCleanupEvent`、`FarmersDelightMigrateEvent`、`FarmersDelightWarmupEvent`、`FarmersDelightCollectLiveDisplaysEvent`——见 `listener/ExampleFarmersDelightEventsListener`（collect-live-displays 在显示管理器里处理）。均不可取消：它们是通知，否决属于上游（采收的否决属于 FarmersDelight 已经咨询过的领地保护层）。
-- `api.util.*` —— `PluginManagerGuard`（阻止 PlugMan 之类在运行时重载 / 卸载你的插件；在 onEnable 注册）、`TooltipUtils.hideDurabilityLine`（当物品的耐久值被用作某种计量条时隐藏耐久行——见 `util/ExampleTooltipCustomizer`），以及跨版本兼容垫片 `CompatAttributes`（跨 1.21.2 属性注册表重命名解析 `MAX_HEALTH` / `ATTACK_SPEED`——传给 `getAttribute` 前先判空）与 `CompatItemMeta`（`setItemModel` / `isSupported`，在 1.21.4+ 上施加 `item_model` 组件；1.21.4 就是支持下限）。请用这些共享垫片，而不是自己另留一份。
+- `api.util.*` —— `PluginManagerGuard`（阻止 PlugMan 之类在运行时重载 / 卸载你的插件；在 onEnable 注册）、`TooltipUtils.hideDurabilityLine`（当物品的耐久值被用作某种计量条时隐藏耐久行——见 `util/ExampleTooltipCustomizer`），以及跨版本兼容垫片 `CompatAttributes`（跨 1.21.2 属性注册表重命名解析 `MAX_HEALTH` / `ATTACK_SPEED`——传给 `getAttribute` 前先判空）与 `CompatItemMeta`（`setItemModel` / `isSupported`，在 1.21.5+ 上施加 `item_model` 组件；1.21.5 就是支持下限）。请用这些共享垫片，而不是自己另留一份。
 - `api.config.*` —— `ConfigFileUpdater` + `ConfigUpdatePolicy` + `ConfigUpdateReport` + `ConfigKeyRename`：让服主手上已有的 `config.yml` 跟上你当前构建所发布的那一份（详见“更多 API”一节）。
 
 ## 更多 API（文本、物品、食物效果、配置更新、成就、配方查询、配方解锁、方块、刀掉落）

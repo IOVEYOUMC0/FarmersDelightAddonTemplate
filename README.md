@@ -35,12 +35,18 @@ inside `com.huidu.farmersdelight.api.**` is the boundary itself, not renamed cla
 
 ## Build setup
 
-1. Check out the FarmersDelight repository as a **sibling** directory (`../FarmersDelight`). This project is a
-   Gradle composite build: `settings.gradle.kts` includes it, so `gradlew` builds FarmersDelight's `:apiJar`
-   and stages it into this project's **`libs/farmersdelight-api.jar`** — a compile-only artifact that the build
-   refreshes, never something to edit or hand-sync. That jar contains ONLY `com.huidu.farmersdelight.api.**` —
-   no FD internals, not a runnable plugin — and the real FarmersDelight plugin provides the implementation at
-   runtime.
+1. The FarmersDelight API is a normal dependency declared in `settings.gradle.kts`
+   (`com.huidu.farmersdelight:farmersdelight-plugin:<version>`), with two channels:
+   * **Local checkout (preferred).** Check out the FarmersDelight repository as a **sibling** directory
+     (`../FarmersDelight`). The project is then a Gradle composite build: `settings.gradle.kts` includes
+     it, so `gradlew` builds its `:apiJar` and substitutes it for the coordinate. No fetch, works offline.
+   * **No checkout.** Without that sibling, Gradle falls back to a source dependency on
+     `https://github.com/IOVEYOUMC0/Farmersdelight-Plugin.git`, checked out at the pinned version, built in
+     place and resolved the same way. **This channel needs network access.**
+
+   Either way the artifact is the api-only jar: it contains ONLY `com.huidu.farmersdelight.api.**` — no FD
+   internals, not a runnable plugin — and the real FarmersDelight plugin provides the implementation at
+   runtime. Nothing has to be vendored under `libs/` any more.
 2. `./gradlew build` (or `shadowJar`) → **`build/libs/fdaddontemplate-1.0.1.jar`**.
 3. Drop the jar in `plugins/` next to FarmersDelight + CraftEngine. This plugin uses `paper-plugin.yml`, whose
    `dependencies.server` entries (`CraftEngine` and `FarmersDelight`, both `load: BEFORE`, `required: true`,
@@ -136,7 +142,7 @@ Helper + event classes (also under `api.**`):
   meter — see `util/ExampleTooltipCustomizer`), and the cross-version shims `CompatAttributes` (resolves
   `MAX_HEALTH` / `ATTACK_SPEED` across the 1.21.2 attribute-registry rename — null-check the constant before
   `getAttribute`) and `CompatItemMeta` (`setItemModel` / `isSupported`, applying the `item_model` component on
-  1.21.4+, which is the supported floor). Use these shared shims instead of keeping your own copy.
+  1.21.5+, which is the supported floor). Use these shared shims instead of keeping your own copy.
 - `api.config.*` — `ConfigFileUpdater` + `ConfigUpdatePolicy` + `ConfigUpdateReport` + `ConfigKeyRename`:
   keep the `config.yml` an operator already has in step with the one your build ships (covered under
   "More API surface").
@@ -484,8 +490,9 @@ tracking; the template's example keeps an in-memory set since the demo block has
 ## Licence — read before you ship
 
 This template ships the **GNU Affero General Public License v3.0** (`LICENSE`), the same licence as the
-FarmersDelight plugin it builds against, and the `libs/farmersdelight-api.jar` it compiles against is
-distributed under that licence too.
+FarmersDelight plugin it builds against, and the FarmersDelight api artifact it compiles against (built from
+the sibling checkout, or fetched as a Gradle source dependency from that same repository) is distributed
+under that licence too.
 
 AGPL-3.0 is strongly copyleft: an addon that links against the FarmersDelight API must itself be released
 under AGPL-3.0, and if you run a modified version as a network service you must offer the corresponding
