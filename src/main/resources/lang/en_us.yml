@@ -1,5 +1,5 @@
 # Example addon messages: console output plus this template's player feedback. The selected locale follows this
-# addon's own `language` setting, then FarmersDelight's resolved server locale, then CraftEngine's forced
+# addon's own language setting, then FarmersDelight's resolved server locale, then CraftEngine's forced
 # locale, then the JVM locale, and finally the zh_cn fallback. Edit freely — these ship inside the plugin jar and
 # are read fresh on plugin enable (a full restart applies changes). Rename the fdaddon: prefix when forking.
 # Values are plain text (AddonLang.get returns a String; MiniMessage tags are only parsed where the caller runs
@@ -14,10 +14,10 @@ fdaddon:
   food_effects_loaded: "Loaded {count} configured food effect(s)."
   advancements_disabled: "Example advancement tab not registered (reason: {reason})."
   advancements_registration_failed: "Example advancements registration failed."
-  config_update_failed: "config.yml could not be updated: {error}"
-  config_backup_failed: "config.yml was not backed up: {error}"
-  config_key_migrated: "Moved {old} to {new}."
-  config_keys_retired: "Removed unread settings: {keys}"
+  config_update_failed: "Could not update {file}, settings were not merged: {error}"
+  config_backup_failed: "Failed to back up {file} before rewriting it: {error}"
+  config_key_migrated: "Migrated config key '{old}' to '{new}'."
+  config_keys_retired: "Removed {count} retired setting(s) from config.yml; they are no longer read: {keys}"
   config_keys_merged: "Added {count} new settings to config.yml."
   example_recipe:
     title: "<gold>Example Recipes"

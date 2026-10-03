@@ -37,7 +37,8 @@ public final class ExampleReloadListener implements Listener {
      * commonly registering a recipe that must be decided at runtime (a static one belongs in this addon's
      * pack instead; see the recipe comment in the plugin main).
      *
-     * <p>Do NOT use CraftEngine's own reload event for this: when CraftEngine broadcasts
+     *
+     * Do NOT use CraftEngine's own reload event for this: when CraftEngine broadcasts
      * CraftEngineReloadEvent its items are not built yet, so FarmersDelightItems.create still
      * returns null and any recipe referencing a custom item is silently dropped. FarmersDelight waits for
      * readiness and then broadcasts this event; every real addon uses it (see EndsDelight's warmup handler

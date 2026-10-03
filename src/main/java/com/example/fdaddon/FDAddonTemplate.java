@@ -51,11 +51,11 @@ import java.util.Map;
  *   - CraftEngine defines your custom items/blocks/recipes from YAML (resources under
  *       craftengine/<namespace>/); this addon bundles them and releases
  *       them into CraftEngine's resource folder on first load.
- *   - FarmersDelight exposes an obfuscation-safe facade, FarmersDelightApi, for the things CE
+ *   - FarmersDelight exposes its supported surface as a facade, FarmersDelightApi, for the things CE
  *       can't do alone — registering cooking-pot / cutting-board recipes, showing recipes in FD's recipe
  *       book, Folia-safe scheduling, heat-source queries, and crafting XP.
- *   - You write the gameplay glue in Java against api.** ONLY (see README — never touch FD
- *       internals, they are renamed by ProGuard).
+ *   - You write the gameplay glue in Java against api.** ONLY (see README — never touch FD internals:
+ *       the api jar does not contain them, and they change between releases).
  *
  * This class wires together the addon's modules. Look at the dedicated classes for examples of the
  * common patterns:

@@ -13,14 +13,16 @@ import org.joml.Vector3f;
  * Shows floating items with FarmersDelight's PACKET item-display API. No real Bukkit entity is spawned:
  * FarmersDelight syncs the display to nearby players and removes it on world unload.
  *
- * <p>Everything goes through a DisplayGroup, which holds the handles, replaces a display when the
+ *
+ * Everything goes through a DisplayGroup, which holds the handles, replaces a display when the
  * shown item changes, and declares the handles live so the /fd cleanup orphan sweep keeps them. That last
  * part is why a group is worth using rather than the raw createItemDisplay handle: a display nothing
  * declares live is swept on every cleanup and rebuilt right after, so it looks like it flickers back.
  * Using a group means this class needs no FarmersDelightCollectLiveDisplaysEvent listener and is not a
  * Bukkit listener at all.
  *
- * <p>Packet displays do NOT persist, so recreate them on chunk or entity load. Every call must run on the
+ *
+ * Packet displays do NOT persist, so recreate them on chunk or entity load. Every call must run on the
  * region that owns the location; when off-region wrap it in FarmersDelightApi.get().runAtLocation(...).
  */
 public final class ExampleItemDisplayManager {

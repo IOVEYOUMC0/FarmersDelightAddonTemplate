@@ -22,24 +22,26 @@ Three pieces, three responsibilities:
    cutting-board recipes, the in-game recipe book, Folia-safe scheduling, heat-source queries, crafting XP.
 3. **Your Java** — gameplay glue. See [`FDAddonTemplate.java`](src/main/java/com/example/fdaddon/FDAddonTemplate.java).
 
-## ⚠️ Obfuscation rule (read this)
+## ⚠️ API boundary rule (read this)
 
-FarmersDelight ships **obfuscated** — ProGuard renames/repackages everything **except**
-`com.huidu.farmersdelight.api.**`, whose names are kept stable. So:
+FarmersDelight is **not obfuscated**: the plugin ships as a single open-source build, so the reason to stay
+inside `com.huidu.farmersdelight.api.**` is the boundary itself, not renamed classes.
 
 - Reference **only** `com.huidu.farmersdelight.api.**` from your addon. Never import FD internals
-  (managers, GUIs, util) — those names change between builds and won't exist at runtime.
+  (managers, GUIs, util): the api jar you compile against contains nothing else, so an internal import does
+  not even compile, and the internals are free to change in any release — nothing tests them for addons.
 - Audit with: `grep -rn "com.huidu.farmersdelight" src` → every hit must be `…api…`.
-- CraftEngine and Paper classes are fine to use directly (they aren't obfuscated by FD).
+- CraftEngine and Paper classes are fine to use directly (separate projects with their own stability rules).
 
 ## Build setup
 
 1. Check out the FarmersDelight repository as a **sibling** directory (`../FarmersDelight`). This project is a
    Gradle composite build: `settings.gradle.kts` includes it, so `gradlew` builds FarmersDelight's `:apiJar`
-   and stages it into this project's **`libs/farmersdelight-api.jar`** (compile-only, gitignored). That jar
-   contains ONLY `com.huidu.farmersdelight.api.**` — no FD internals, not a runnable plugin — and the real
-   FarmersDelight plugin provides the implementation at runtime.
-2. `./gradlew build` (or `shadowJar`) → **`build/libs/fdaddontemplate-1.0.0.jar`**.
+   and stages it into this project's **`libs/farmersdelight-api.jar`** — a compile-only artifact that the build
+   refreshes, never something to edit or hand-sync. That jar contains ONLY `com.huidu.farmersdelight.api.**` —
+   no FD internals, not a runnable plugin — and the real FarmersDelight plugin provides the implementation at
+   runtime.
+2. `./gradlew build` (or `shadowJar`) → **`build/libs/fdaddontemplate-1.0.1.jar`**.
 3. Drop the jar in `plugins/` next to FarmersDelight + CraftEngine. This plugin uses `paper-plugin.yml`, whose
    `dependencies.server` entries (`CraftEngine` and `FarmersDelight`, both `load: BEFORE`, `required: true`,
    `join-classpath: true`) ensure load order and classpath access.
@@ -478,3 +480,17 @@ Registration is safe even on a non-debug FD build (no `-PdebugTools=true`) — t
 your methods are never called. Plugins with a central manager (e.g. FD's `StoveManager` or BAC's
 `KegManager`) should iterate the manager in `activate` / `cleanupBeforeUndo` rather than duplicate
 tracking; the template's example keeps an in-memory set since the demo block has no manager.
+
+## Licence — read before you ship
+
+This template ships the **GNU Affero General Public License v3.0** (`LICENSE`), the same licence as the
+FarmersDelight plugin it builds against, and the `libs/farmersdelight-api.jar` it compiles against is
+distributed under that licence too.
+
+AGPL-3.0 is strongly copyleft: an addon that links against the FarmersDelight API must itself be released
+under AGPL-3.0, and if you run a modified version as a network service you must offer the corresponding
+source to its users. If that does not suit your project, do not copy this template — get the addon
+licensed differently from the FarmersDelight authors first.
+
+The template's own example code is a starting point only: delete the demo content and replace it with
+yours.

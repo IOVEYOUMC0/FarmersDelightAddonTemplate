@@ -29,8 +29,8 @@ import org.bukkit.entity.Player;
  *       CraftEngine inside the chunk. Implementing EntityBlock is all it takes for CraftEngine to
  *       create + save/load that controller automatically (no block-entity declaration in blocks.yml).
  *
- * CraftEngine's classes are a STABLE, non-obfuscated API (it's a separate plugin), so importing
- * net.momirealms.craftengine.** directly is fine — unlike FarmersDelight internals.
+ * CraftEngine's classes are a separate plugin's API, so importing net.momirealms.craftengine.** directly
+ * is fine — unlike FarmersDelight internals, which only api.** replaces.
  */
 public final class ExampleBlockBehavior extends BlockBehavior implements EntityBlock {
 

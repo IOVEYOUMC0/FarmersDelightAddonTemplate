@@ -6,13 +6,15 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  * Resolves this addon's console messages, delegating to FarmersDelight's shared implementation.
  *
- * <p>Do not hand-roll this. AddonLanguage releases lang/*.yml into plugins/&lt;Addon&gt;/lang/
+ *
+ * Do not hand-roll this. AddonLanguage releases lang/*.yml into plugins/&lt;Addon&gt;/lang/
  * so operators can edit a line, honours the language key in config.yml, inherits the locale
  * FarmersDelight already resolved (so every addon on a server speaks the same language), merges keys
  * missing from an older file, and restores a corrupted one from backup. A private copy gets none of
  * that. The per-addon namespace is the constructor's key prefix, not a separate implementation.
  *
- * <p>Keys are dotted paths ("fdaddon.enabled"); {name} placeholders are filled from alternating
+ *
+ * Keys are dotted paths ("fdaddon.enabled"); {name} placeholders are filled from alternating
  * key/value args.
  */
 public final class AddonLang {

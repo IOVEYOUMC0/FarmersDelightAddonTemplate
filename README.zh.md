@@ -18,18 +18,19 @@ Your addon   ── bundles CraftEngine YAML  +  Java glue that calls the Farmer
 2. **FarmersDelight API**（`FarmersDelightApi`）—— CraftEngine 单独无法完成的部分：炖锅 / 切菜板配方、游戏内配方书、Folia 安全调度、热源查询、合成经验。
 3. **你的 Java 代码** —— 玩法粘合层。参见 [`FDAddonTemplate.java`](src/main/java/com/example/fdaddon/FDAddonTemplate.java)。
 
-## ⚠️ 混淆规则（务必阅读）
+## ⚠️ API 边界规则（务必阅读）
 
-FarmersDelight 以**混淆**形式发布 —— ProGuard 会重命名 / 重新打包**除** `com.huidu.farmersdelight.api.**` 之外的所有内容，而该包下的名称保持稳定。因此：
+FarmersDelight 现在**不做混淆**（整个插件就是一份开源构建），所以必须待在
+`com.huidu.farmersdelight.api.**` 里的理由不再是"类名会被改"，而是**这条边界本身**：
 
-- 在你的扩展中**只**引用 `com.huidu.farmersdelight.api.**`。绝不要 import FD 的内部类（管理器、GUI、工具类）—— 这些名称在不同构建之间会变化，并且在运行时不存在。
+- 在你的扩展中**只**引用 `com.huidu.farmersdelight.api.**`。绝不要 import FD 的内部类（管理器、GUI、工具类）：你编译用的 api jar 里根本没有这些类，内部 import 连编译都过不去；而内部实现任何版本都可能变，也没有任何测试为附属保证它。
 - 用以下命令审查：`grep -rn "com.huidu.farmersdelight" src` → 每一处命中都必须是 `…api…`。
-- CraftEngine 和 Paper 的类可以直接使用（它们不会被 FD 混淆）。
+- CraftEngine 和 Paper 的类可以直接使用（它们是独立项目，有自己的稳定性规则）。
 
 ## 构建配置
 
-1. 将 FarmersDelight 仓库检出为**同级目录**（`../FarmersDelight`）。本项目是 Gradle 复合构建：`settings.gradle.kts` 把它 include 进来，所以 `gradlew` 会构建 FarmersDelight 的 `:apiJar` 并暂存到本项目的 **`libs/farmersdelight-api.jar`**（仅编译期、被 gitignore 忽略）。该 jar **只含** `com.huidu.farmersdelight.api.**` —— 不含 FD 内部类、不是可运行插件；真正的 FarmersDelight 插件会在运行时提供实现。
-2. `./gradlew build`（或 `shadowJar`）→ **`build/libs/fdaddontemplate-1.0.0.jar`**。
+1. 将 FarmersDelight 仓库检出为**同级目录**（`../FarmersDelight`）。本项目是 Gradle 复合构建：`settings.gradle.kts` 把它 include 进来，所以 `gradlew` 会构建 FarmersDelight 的 `:apiJar` 并暂存到本项目的 **`libs/farmersdelight-api.jar`** —— 这是构建会重新生成的、仅编译期的产物，不要手改也不要手工同步。该 jar **只含** `com.huidu.farmersdelight.api.**` —— 不含 FD 内部类、不是可运行插件；真正的 FarmersDelight 插件会在运行时提供实现。
+2. `./gradlew build`（或 `shadowJar`）→ **`build/libs/fdaddontemplate-1.0.1.jar`**。
 3. 将该 jar 放入 `plugins/` 目录，与 FarmersDelight + CraftEngine 并列。本插件使用 `paper-plugin.yml`，其中的 `dependencies.server` 条目（`CraftEngine` 与 `FarmersDelight`，均为 `load: BEFORE`、`required: true`、`join-classpath: true`）负责加载顺序与类路径访问。
 
 ## `FarmersDelightApi` 参考

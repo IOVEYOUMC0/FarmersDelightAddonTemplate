@@ -4,8 +4,9 @@ bin/
 out/
 *.class
 
-# Vendored FarmersDelight api facade jar (compile-only). Prebuilt from the FarmersDelight repo's :apiJar
-# task and committed, so the addon builds without access to the closed-source FarmersDelight source.
+# The FarmersDelight api facade jar (compile-only). It is the output of the composite build's apiJar
+# sync, committed so the api surface this template compiles against is visible in the tree; every build
+# rewrites it. Nothing else may live under libs/.
 libs/*
 !libs/farmersdelight-api.jar
 
