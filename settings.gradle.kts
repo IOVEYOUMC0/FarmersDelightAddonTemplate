@@ -28,10 +28,13 @@ if (farmersDelightCheckout.isDirectory) {
 
 gradle.beforeProject {
     // The dependency has to be added after this project's build script has been evaluated: only then is
-    // the java plugin applied and its `compileOnly` configuration present.
+    // the java plugin applied and its `compileOnly` / `testImplementation` configurations present.
     afterEvaluate {
         if (configurations.findByName("compileOnly") != null) {
             dependencies.add("compileOnly", "com.huidu.farmersdelight:farmersdelight-plugin:$farmersDelightApiVersion")
+        }
+        if (configurations.findByName("testImplementation") != null) {
+            dependencies.add("testImplementation", "com.huidu.farmersdelight:farmersdelight-plugin:$farmersDelightApiVersion")
         }
     }
 }

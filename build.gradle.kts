@@ -17,7 +17,7 @@ repositories {
 // The FarmersDelight api dependency is wired in settings.gradle.kts: it resolves to the sibling
 // ../FarmersDelight composite build when that checkout exists, and otherwise to a Gradle source
 // dependency on the git repository. Either way the coordinate is
-// com.huidu.farmersdelight:farmersdelight-plugin:<version>, added there as compileOnly.
+// com.huidu.farmersdelight:farmersdelight-plugin:<version>, added there as compileOnly + testImplementation.
 // CraftEngine is resolved from Maven. Overridable so a compatibility check can build the same sources
 // against another release without editing this file:  gradlew build -PceVersion=26.8.2
 val ceVersion = providers.gradleProperty("ceVersion").getOrElse("26.9.1")
