@@ -26,14 +26,13 @@ import com.huidu.farmersdelight.api.item.FarmersDelightItems;
 import com.huidu.farmersdelight.api.recipe.FarmersDelightRecipeDiscovery;
 import com.huidu.farmersdelight.api.recipe.FarmersDelightRecipes;
 import com.huidu.farmersdelight.api.recipe.RecipeInfo;
+import com.huidu.farmersdelight.api.registry.ContentRegistration;
 import com.huidu.farmersdelight.api.resource.CraftEngineResources;
 import com.huidu.farmersdelight.api.scheduler.ApiTask;
 import com.huidu.farmersdelight.api.text.FarmersDelightMessages;
 import com.huidu.farmersdelight.api.text.FarmersDelightText;
 import com.huidu.farmersdelight.api.world.WorldBlockKey;
 import net.kyori.adventure.text.Component;
-import net.momirealms.craftengine.core.block.behavior.BlockBehaviors;
-import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -89,15 +88,15 @@ public final class FDAddonTemplate extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        // Register custom-block behaviors with CraftEngine BEFORE it parses blocks.yml (which references
-        // them by id). This sample uses CraftEngine's own registry API directly to show the native path;
-        // its classes keep stable names, so that is safe. FarmersDelight also publishes
-        // api/registry/ContentRegistration.registerBlockBehavior(id, factory), which registers into the same
-        // registry, refuses an id that is already taken instead of replacing it, and re-applies the entries
-        // it remembers. CraftEngine keeps these registries for the whole class-loader lifetime, so that
-        // re-apply pass is defence in depth; an addon using the api still needs its own once-only guard.
-        if (BuiltInRegistries.BLOCK_BEHAVIOR_TYPE.getValue(Key.of(NS + ":example_block")) == null) {
-            BlockBehaviors.register(Key.of(NS + ":example_block"), ExampleBlockBehavior.FACTORY);
+        // Register the custom block behavior with CraftEngine BEFORE it parses blocks.yml, which references
+        // the behavior by id: CraftEngine resolves that id while it reads the file, so a registration made
+        // later never reaches that parse. ContentRegistration registers into the same registry, rejects an
+        // id outside your own namespace and an id that is already taken instead of replacing it, and its
+        // isRegistered check keeps a second registration pass in the same JVM from being rejected as a
+        // duplicate (a repeat without the guard would fail the load).
+        Key exampleBlock = Key.of(NS + ":example_block");
+        if (!ContentRegistration.isRegistered(exampleBlock)) {
+            ContentRegistration.registerBlockBehavior(exampleBlock, ExampleBlockBehavior.FACTORY);
         }
         // Copy this addon's bundled CraftEngine resources into plugins/CraftEngine/resources/<namespace>/
         // (install-if-missing). Do this in onLoad so the files exist before CraftEngine scans them.
