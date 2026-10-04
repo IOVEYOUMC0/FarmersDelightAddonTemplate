@@ -90,8 +90,12 @@ public final class FDAddonTemplate extends JavaPlugin {
     @Override
     public void onLoad() {
         // Register custom-block behaviors with CraftEngine BEFORE it parses blocks.yml (which references
-        // them by id). This is CraftEngine's OWN api (BlockBehaviors.register) — not FarmersDelight; FD
-        // does not bridge block registration. CraftEngine's classes keep stable names, so this is safe.
+        // them by id). This sample uses CraftEngine's own registry API directly to show the native path;
+        // its classes keep stable names, so that is safe. FarmersDelight also publishes
+        // api/registry/ContentRegistration.registerBlockBehavior(id, factory), which registers into the same
+        // registry, refuses an id that is already taken instead of replacing it, and re-applies the entries
+        // it remembers. CraftEngine keeps these registries for the whole class-loader lifetime, so that
+        // re-apply pass is defence in depth; an addon using the api still needs its own once-only guard.
         if (BuiltInRegistries.BLOCK_BEHAVIOR_TYPE.getValue(Key.of(NS + ":example_block")) == null) {
             BlockBehaviors.register(Key.of(NS + ":example_block"), ExampleBlockBehavior.FACTORY);
         }
