@@ -1,6 +1,22 @@
-# FarmersDelight Addon Template
+<h1 align="center">FarmersDelight Addon Template</h1>
 
-**English** | [中文](README.zh.md)
+<p align="center">
+  <img src="https://img.shields.io/badge/Minecraft-1.21.5%2B-3fb950" alt="Minecraft 1.21.5+">
+  <img src="https://img.shields.io/badge/CraftEngine-26.9.1-5865F2" alt="CraftEngine 26.9.1">
+  <img src="https://img.shields.io/badge/Java-21-orange" alt="Java 21">
+  <img src="https://img.shields.io/badge/Folia-supported-blueviolet" alt="Folia supported">
+  <img src="https://img.shields.io/badge/API-com.huidu.farmersdelight.api-blue" alt="Addon API">
+</p>
+
+<p align="center">
+  <b>English</b> | <a href="README.zh.md">简体中文</a>
+</p>
+
+<p align="center"><i>A copy-and-rename starting point for FarmersDelight addons, with a fully commented example plugin.</i></p>
+
+---
+
+## About
 
 A minimal, fully-commented starting point for building your own addon on top of the **FarmersDelight**
 (CraftEngine) plugin. Copy this folder, rename the namespace, and replace the example content.
@@ -22,7 +38,7 @@ Three pieces, three responsibilities:
    cutting-board recipes, the in-game recipe book, Folia-safe scheduling, heat-source queries, crafting XP.
 3. **Your Java** — gameplay glue. See [`FDAddonTemplate.java`](src/main/java/com/example/fdaddon/FDAddonTemplate.java).
 
-## ⚠️ API boundary rule (read this)
+## API boundary rule (read this)
 
 FarmersDelight is **not obfuscated**: the plugin ships as a single open-source build, so the reason to stay
 inside `com.huidu.farmersdelight.api.**` is the boundary itself, not renamed classes.
@@ -433,9 +449,10 @@ commented example (custom food + on-eat effect, a vanilla-item behavior override
 ## Custom blocks with interaction + per-block saved content
 
 A custom block that *does something* and *remembers state per position* is split across three places —
-all of it CraftEngine's own API, not FarmersDelight (FD does not bridge block registration; it bridges
-recipes / scheduling / heat / XP). Because CraftEngine's classes keep stable names, importing
-`net.momirealms.craftengine.**` directly is safe (unlike FD internals).
+all of it CraftEngine's own API. FarmersDelight publishes `api.registry.ContentRegistration` for callers
+that want its id rules and its re-apply pass, but registering a block behaviour with CraftEngine directly is
+equally valid; FD's own bridging covers recipes / scheduling / heat / XP. Because CraftEngine's classes keep
+stable names, importing `net.momirealms.craftengine.**` directly is safe (unlike FD internals).
 
 1. **Block definition** — [`configuration/blocks.yml`](src/main/resources/craftengine/fdaddon/configuration/blocks.yml):
    `blocks.fdaddon:example_block` with `behavior: - type: fdaddon:example_block`, a `block_item` so it can
@@ -486,6 +503,17 @@ Registration is safe even on a non-debug FD build (no `-PdebugTools=true`) — t
 your methods are never called. Plugins with a central manager (e.g. FD's `StoveManager` or BAC's
 `KegManager`) should iterate the manager in `activate` / `cleanupBeforeUndo` rather than duplicate
 tracking; the template's example keeps an in-memory set since the demo block has no manager.
+
+## Credits
+
+This template has no upstream mod: it is an original project by the FarmersDelight authors, written for
+addons that build on the FarmersDelight plugin.
+
+- FarmersDelight plugin: https://github.com/IOVEYOUMC0/Farmersdelight-Plugin
+- Addon-facing API docs (`api-docs/`): https://github.com/IOVEYOUMC0/FarmersdelightPluginWiKi
+
+The contract this template compiles against is `com.huidu.farmersdelight.api`; everything outside that
+package is internal to the plugin and may change.
 
 ## Licence — read before you ship
 

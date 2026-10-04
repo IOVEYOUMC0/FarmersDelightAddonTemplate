@@ -1,6 +1,22 @@
-# FarmersDelight Addon Template
+<h1 align="center">FarmersDelight Addon Template</h1>
 
-[English](README.md) | **中文**
+<p align="center">
+  <img src="https://img.shields.io/badge/Minecraft-1.21.5%2B-3fb950" alt="Minecraft 1.21.5+">
+  <img src="https://img.shields.io/badge/CraftEngine-26.9.1-5865F2" alt="CraftEngine 26.9.1">
+  <img src="https://img.shields.io/badge/Java-21-orange" alt="Java 21">
+  <img src="https://img.shields.io/badge/Folia-supported-blueviolet" alt="Folia supported">
+  <img src="https://img.shields.io/badge/API-com.huidu.farmersdelight.api-blue" alt="附属 API">
+</p>
+
+<p align="center">
+  <a href="README.md">English</a> | <b>简体中文</b>
+</p>
+
+<p align="center"><i>面向 FarmersDelight 附属的复制即用模板，附带一个注释完整的示例插件。</i></p>
+
+---
+
+## 关于
 
 一个精简且注释完整的起始模板，用于在 **FarmersDelight**（CraftEngine）插件之上构建你自己的扩展（addon）。复制此文件夹，重命名命名空间，然后替换示例内容即可。
 
@@ -18,7 +34,7 @@ Your addon   ── bundles CraftEngine YAML  +  Java glue that calls the Farmer
 2. **FarmersDelight API**（`FarmersDelightApi`）—— CraftEngine 单独无法完成的部分：炖锅 / 切菜板配方、游戏内配方书、Folia 安全调度、热源查询、合成经验。
 3. **你的 Java 代码** —— 玩法粘合层。参见 [`FDAddonTemplate.java`](src/main/java/com/example/fdaddon/FDAddonTemplate.java)。
 
-## ⚠️ API 边界规则（务必阅读）
+## API 边界规则（务必阅读）
 
 FarmersDelight 现在**不做混淆**（整个插件就是一份开源构建），所以必须待在
 `com.huidu.farmersdelight.api.**` 里的理由不再是"类名会被改"，而是**这条边界本身**：
@@ -378,3 +394,12 @@ boolean has = FarmersDelightKnifeDrops.hasRule("cow");      // 来自任意来�
 状态，你的方法不会被调用。有中央 manager 的插件（如 FD 的 `StoveManager` 或 BAC 的 `KegManager`）
 应该在 `activate` / `cleanupBeforeUndo` 里直接遍历 manager，而不是另外维护一份追踪；模板里因为示例方块
 没有 manager，所以才在 extension 内部存了一个 set。
+
+## 致谢
+
+本模板没有上游模组：它是 FarmersDelight 作者为基于本插件的附属编写的原创模板工程。
+
+- FarmersDelight 插件：https://github.com/IOVEYOUMC0/Farmersdelight-Plugin
+- 面向附属的 API 文档（`api-docs/`）：https://github.com/IOVEYOUMC0/FarmersdelightPluginWiKi
+
+本模板编译所依赖的契约是 `com.huidu.farmersdelight.api`；该包之外的一切都属于插件内部实现，可能随时变化。
