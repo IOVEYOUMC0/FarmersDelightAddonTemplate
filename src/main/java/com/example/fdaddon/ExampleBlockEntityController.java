@@ -2,6 +2,9 @@ package com.example.fdaddon;
 
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
 import net.momirealms.craftengine.core.block.entity.BlockEntityController;
+import net.momirealms.craftengine.core.block.entity.tick.BlockEntityTicker;
+import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.libraries.nbt.CompoundTag;
 
 /**
@@ -22,6 +25,23 @@ public final class ExampleBlockEntityController extends BlockEntityController {
 
     public ExampleBlockEntityController(BlockEntity blockEntity) {
         super(blockEntity);
+    }
+
+    /**
+     * The tick channel CraftEngine's world layer drives. Declare the synchronous ticker — never the asynchronous
+     * one, whose thread model is not established on a regionised server — and do the per-tick work of this block
+     * here; it runs on the owning region, which is where block state may be read and written.
+     */
+    @Override
+    public <C extends BlockEntityController> BlockEntityTicker<C> createBlockEntityTicker(CEWorld world,
+            ImmutableBlockState blockState) {
+        return createTickerHelper(ExampleBlockEntityController::tick);
+    }
+
+    private static void tick(CEWorld world, net.momirealms.craftengine.core.world.BlockPos pos,
+            ImmutableBlockState state, ExampleBlockEntityController controller) {
+        // Per-tick work goes here (a bounded step of this block's own progress, storage sync, ...). This example
+        // keeps the counter as it is, so the ticker stays a no-op until an addon gives it something to advance.
     }
 
     /** Bump the counter and tell CraftEngine this block entity changed so it gets re-saved with the chunk. */
