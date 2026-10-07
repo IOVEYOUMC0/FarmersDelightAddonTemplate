@@ -30,6 +30,10 @@ dependencies {
     compileOnly("net.momirealms:craft-engine-bukkit:$ceVersion")
     // The bukkit artifact no longer bundles core, so the core classes come from their own jar.
     compileOnly("net.momirealms:craft-engine-core:$ceVersion")
+
+    // The same runner the other plugins in the family test with, so a copied test runs here too.
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java {
@@ -52,6 +56,10 @@ tasks.shadowJar {
     archiveBaseName.set("fdaddontemplate")
     // Drop Shadow's default "-all" classifier so the artifact is the plain documented file name.
     archiveClassifier.set("")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.jar { enabled = false }
