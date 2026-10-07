@@ -1,7 +1,7 @@
 package com.example.fdaddon.util;
 
 import com.huidu.farmersdelight.api.config.ConfigFileUpdater;
-import com.huidu.farmersdelight.api.config.ConfigKeyRename;
+import com.huidu.farmersdelight.api.config.ConfigUpdateNotices;
 import com.huidu.farmersdelight.api.config.ConfigUpdatePolicy;
 import com.huidu.farmersdelight.api.config.ConfigUpdateReport;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -45,8 +45,8 @@ public final class ExampleConfigBootstrap {
     /**
      * Renames the paths that moved, drops the ones nothing reads and merges the keys the operator's file is
      * missing, rewriting the file only when something actually changed. A timestamped copy is kept first,
-     * because the same pass that adds settings also deletes values the operator wrote. The API never logs;
-     * this addon logs the report through its language resolver.
+     * because the same pass that adds settings also deletes values the operator wrote. The report is logged by
+     * the family's shared notices, so this addon reads exactly like every other plugin in the family.
      */
     public void updateConfig() {
         ConfigUpdateReport report;
@@ -57,19 +57,6 @@ public final class ExampleConfigBootstrap {
                     "error", String.valueOf(e.getMessage())));
             return;
         }
-        if (report.backupError() != null) {
-            plugin.getLogger().warning(AddonLang.get("fdaddon.config_backup_failed", "error", report.backupError()));
-        }
-        for (ConfigKeyRename rename : report.migratedKeys()) {
-            plugin.getLogger().info(AddonLang.get("fdaddon.config_key_migrated",
-                    "old", rename.oldPath(), "new", rename.newPath()));
-        }
-        if (!report.retiredKeys().isEmpty()) {
-            plugin.getLogger().info(AddonLang.get("fdaddon.config_keys_retired",
-                    "keys", String.join(", ", report.retiredKeys())));
-        }
-        if (report.addedKeys() > 0) {
-            plugin.getLogger().info(AddonLang.get("fdaddon.config_keys_merged", "count", report.addedKeys()));
-        }
+        ConfigUpdateNotices.logAll(plugin, "config.yml", report);
     }
 }
