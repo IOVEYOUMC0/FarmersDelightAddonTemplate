@@ -45,7 +45,7 @@ public final class ExampleRecipeEditor implements RecipeEditor {
         if (id != null && !id.isBlank()) {
             EditableRecipe saved = store.get(id);
             if (saved != null) {
-                return saved;
+                return saved.copy();
             }
         }
         // Blank draft. The slot count MUST equal itemSlotLabels().size(); seed sensible number defaults.
@@ -64,7 +64,7 @@ public final class ExampleRecipeEditor implements RecipeEditor {
         // A real addon would write these to its own YAML and reload its manager. The edited values are all
         // available here: draft.result(), draft.resultCount(), draft.number(COOK_TIME, 200),
         // draft.number(EXPERIENCE, 1.0), and draft.item(0..itemSlotCount()-1) (null for an empty slot).
-        store.put(draft.id(), draft);
+        store.put(draft.id(), draft.copy());
         return true;
     }
 

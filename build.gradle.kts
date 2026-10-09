@@ -58,6 +58,10 @@ tasks.shadowJar {
     archiveClassifier.set("")
 }
 
+configurations.testImplementation {
+    extendsFrom(configurations.compileOnly.get())
+}
+
 tasks.test {
     useJUnitPlatform()
 }

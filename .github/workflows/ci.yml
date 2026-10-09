@@ -39,7 +39,7 @@ jobs:
         with:
           repository: IOVEYOUMC0/Farmersdelight
           path: FarmersDelight
-          token: ${{ secrets.FD_REPO_TOKEN }}
+          token: ${{ secrets.FD_REPO_TOKEN || github.token }}
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -52,7 +52,20 @@ jobs:
         working-directory: FDAddonTemplate
         run: |
           chmod +x ./gradlew
-          ./gradlew build --no-daemon --stacktrace
+          ./gradlew clean build --no-daemon --stacktrace
+
+      - name: Require zero failing, errored or skipped JUnit tests
+        run: python3 FarmersDelight/tools/check_test_results.py FDAddonTemplate
+
+      - name: Set up Python for repository checks
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run contracts for the checked-out modules
+        run: |
+          python -m pip install --quiet pyyaml
+          python FarmersDelight/tools/run_all_checks.py --quiet
 
       - name: Upload test report
         if: always()

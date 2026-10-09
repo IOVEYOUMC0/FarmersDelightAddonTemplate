@@ -7,17 +7,12 @@ import com.huidu.farmersdelight.api.util.DebugToolExtension;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.core.block.BlockDefinition;
-import net.momirealms.craftengine.core.block.entity.BlockEntity;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.world.BlockPos;
-import net.momirealms.craftengine.core.world.CEWorld;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,7 +41,7 @@ public final class ExampleDebugExtension implements DebugToolExtension {
     private static final Key EXAMPLE_BLOCK = Key.of(FDAddonTemplate.NS + ":example_block");
 
     private final FDAddonTemplate plugin;
-    // Tracks every location this extension has placed (per-world), so activate() / cleanupBeforeUndo()
+    // Tracks every location this extension has placed (per-world), so activateAt() / cleanupBeforeUndo()
     // know what to act on. ConcurrentHashMap+Set so place() can run on the player thread while a
     // long-running activate() iterates safely.
     private final Set<Location> placed = ConcurrentHashMap.newKeySet();
@@ -93,7 +88,7 @@ public final class ExampleDebugExtension implements DebugToolExtension {
             // Snapshot pre-state into FD's debug-tool undo batch BEFORE mutating.
             if (undo != null) undo.capture(loc);
             if (CraftEngineBlocks.place(loc, def.defaultState(), false)) {
-                placed.add(loc.clone());
+                placed.add(cell(loc));
                 placedCount++;
             }
         }
@@ -101,26 +96,11 @@ public final class ExampleDebugExtension implements DebugToolExtension {
     }
 
     @Override
-    public int activate(Player player) {
-        if (player == null) return 0;
-        CEWorld ceWorld = CraftEngineBlockAccess.getCEWorld(player.getWorld());
-        if (ceWorld == null) return 0;
-
-        int activated = 0;
-        // Defensive copy: iterate over a snapshot so a concurrent place() on the player thread
-        // can't cause a ConcurrentModificationException while we walk the placed set.
-        for (Location loc : new ArrayList<>(placed)) {
-            if (loc.getWorld() == null || !loc.getWorld().equals(player.getWorld())) continue;
-            BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(
-                    new BlockPos(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
-            if (blockEntity == null) continue;
-            int[] count = {0};
-            // A single-controller EntityBlock always gets controller id 0, so 0 is correct here.
-            blockEntity.controller.let(ExampleBlockEntityController.class, 0,
-                    controller -> { count[0] = controller.increment(); });
-            if (count[0] > 0) activated++;
-        }
-        return activated;
+    public int activateAt(Player player, Location location) {
+        if (location == null || location.getWorld() == null || !placed.contains(cell(location))) return 0;
+        var controller = CraftEngineBlockAccess.blockEntityController(location.getWorld(),
+                location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        return controller instanceof ExampleBlockEntityController example && example.increment() > 0 ? 1 : 0;
     }
 
     @Override
@@ -136,19 +116,10 @@ public final class ExampleDebugExtension implements DebugToolExtension {
 
     @Override
     public void cleanupBeforeUndo(Location location) {
-        if (location == null) return;
-        // O(n) but the placed set is bounded by the per-batch place count + history depth (FD limits
-        // both). Use Iterator.remove() so we don't allocate a temp comparator.
-        Iterator<Location> it = placed.iterator();
-        while (it.hasNext()) {
-            Location loc = it.next();
-            if (loc.getBlockX() == location.getBlockX()
-                    && loc.getBlockY() == location.getBlockY()
-                    && loc.getBlockZ() == location.getBlockZ()
-                    && loc.getWorld() != null && loc.getWorld().equals(location.getWorld())) {
-                it.remove();
-                return;
-            }
-        }
+        if (location != null && location.getWorld() != null) placed.remove(cell(location));
+    }
+
+    private static Location cell(Location location) {
+        return new Location(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 }
