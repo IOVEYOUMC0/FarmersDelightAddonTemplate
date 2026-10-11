@@ -51,6 +51,12 @@ public final class ExampleDebugExtension implements DebugToolExtension {
     }
 
     @Override
+    public boolean supportsPlacement() { return true; }
+
+    @Override
+    public boolean supportsActivation() { return true; }
+
+    @Override
     public String name() {
         // The keyword admins type: /fd debugtools place example_block ...
         return "example_block";
