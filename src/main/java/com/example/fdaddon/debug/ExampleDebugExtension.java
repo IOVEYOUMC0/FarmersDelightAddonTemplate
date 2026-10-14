@@ -17,38 +17,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Plugs this addon into FarmersDelight's /fd debugtools command — so admins can stress-test
- * the addon's custom block (mass-place, mass-activate, status, undo) without the addon needing to
- * ship a CLI of its own.
- *
- * Register one instance in onEnable() via
- * com.huidu.farmersdelight.api.util.DebugToolRegistry.register. The registration is safe even
- * when FD is built without -PdebugTools=true: the registry is dormant and these methods are
- * never called.
- *
- * Status reporting: /fd stats lists every registered extension as a clickable name; clicking one
- * runs /fd stats addon <name>, which prints the lines returned by status(). Return one line per
- * data point for a readable breakdown. Lines are MiniMessage-parsed, so angle brackets can colour
- * values deliberately.
- *
- * This example keeps its own in-memory set of placed locations because the demo block has no
- * central manager. Plugins with a manager (e.g. BAC's KegManager) should iterate the manager
- * directly in activate / cleanupBeforeUndo instead of duplicating tracking.
- */
+/** Position-scoped debug callbacks; FD owns batching, protection checks and scheduling. */
 public final class ExampleDebugExtension implements DebugToolExtension {
 
     private static final Key EXAMPLE_BLOCK = Key.of(FDAddonTemplate.NS + ":example_block");
 
-    private final FDAddonTemplate plugin;
-    // Tracks every location this extension has placed (per-world), so activateAt() / cleanupBeforeUndo()
-    // know what to act on. ConcurrentHashMap+Set so place() can run on the player thread while a
-    // long-running activate() iterates safely.
     private final Set<Location> placed = ConcurrentHashMap.newKeySet();
 
-    public ExampleDebugExtension(FDAddonTemplate plugin) {
-        this.plugin = plugin;
-    }
 
     @Override
     public boolean supportsPlacement() { return true; }
@@ -111,8 +86,6 @@ public final class ExampleDebugExtension implements DebugToolExtension {
 
     @Override
     public List<String> status(Player player) {
-        // Called by /fd stats addon example_block. One line per data point; MiniMessage markup is
-        // allowed, so wrap dynamic values in a colour for contrast.
         return List.of(
                 "<gray>debug-placed:</gray> <aqua>" + placed.size() + "</aqua>",
                 "<gray>active world:</gray> " + (player == null || player.getWorld() == null

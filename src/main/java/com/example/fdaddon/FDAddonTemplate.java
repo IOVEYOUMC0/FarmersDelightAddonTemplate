@@ -195,7 +195,7 @@ public final class FDAddonTemplate extends JavaPlugin {
         // 6) /fd debugtools integration: lets admins mass-place / mass-activate / status / undo this
         //    addon's blocks through FD's existing debug command. Safe to register even on a non-debug
         //    FD build (the registry is dormant and the methods are never called).
-        DebugToolRegistry.register(new ExampleDebugExtension(this));
+        DebugToolRegistry.register(new ExampleDebugExtension());
 
         // 7) Custom buff + boss bar: register a persistent addon buff so FD's milk-cure listener and its
         //    join/quit persistence lifecycle drive it, then push its readout to FD's boss-bar channel each
@@ -305,7 +305,7 @@ public final class FDAddonTemplate extends JavaPlugin {
         // Also available: runLaterAtLocation(loc, task, delayTicks) and runRepeating(task, delay, period).
     }
 
-    /** Award crafting XP like the cooking pot: drops XP orbs (config-gated), AuraSkills XP, fires an event. */
+    /** Awards configured vanilla or CE leveler experience and fires the experience event. */
     public void rewardCraft(Player player, Location at, ItemStack result) {
         FarmersDelightApi.get().awardCraftingExperience(player, at, result, 1.0, NS + ":example_stew");
     }

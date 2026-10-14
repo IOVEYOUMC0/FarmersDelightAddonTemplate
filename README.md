@@ -68,6 +68,8 @@ inside `com.huidu.farmersdelight.api.**` is the boundary itself, not renamed cla
    `dependencies.server` entries (`CraftEngine` and `FarmersDelight`, both `load: BEFORE`, `required: true`,
    `join-classpath: true`) ensure load order and classpath access.
 
+Current API/build checks: [verification](docs/verification-template-2026-10-15.md).
+
 ## `FarmersDelightApi` reference
 
 Get the singleton with `FarmersDelightApi.get()`. **Guard every call with `isAvailable()`.**
@@ -86,7 +88,7 @@ Get the singleton with `FarmersDelightApi.get()`. **Guard every call with `isAva
 | `openRecipeEditor(player, typeId, recipeId)` | open the editor for an editable type |
 | `isHeatSource(block)` / `isConductor(block)` | heat-source queries for your cooking blocks |
 | `runAtLocation(loc, task)` / `runLaterAtLocation(loc, task, ticks)` / `runRepeating(task, delay, period)` | Folia-safe scheduling (repeating returns an `ApiTask`) |
-| `awardCraftingExperience(player, loc, result, baseExp, source)` | XP orbs + AuraSkills + ProfessionCookingExperienceEvent |
+| `awardCraftingExperience(player, loc, result, baseExp, source)` | Configured vanilla / CE Leveler XP + ProfessionCookingExperienceEvent |
 
 ### Versioning & feature gating
 
@@ -451,8 +453,9 @@ commented example (custom food + on-eat effect, a vanilla-item behavior override
 A custom block that *does something* and *remembers state per position* is split across three places —
 all of it CraftEngine's own API. FarmersDelight publishes `api.registry.ContentRegistration` for callers
 that want its id rules and its re-apply pass, but registering a block behaviour with CraftEngine directly is
-equally valid; FD's own bridging covers recipes / scheduling / heat / XP. Because CraftEngine's classes keep
-stable names, importing `net.momirealms.craftengine.**` directly is safe (unlike FD internals).
+equally valid; FD's own bridging covers recipes / scheduling / heat / XP. Compile against CE 26.9.1 and
+verify symbols on 26.8.2–26.10. Stable class names alone do not guarantee API compatibility; optional
+newer APIs need version checks and a fallback. Paper 1.21.5 is the compilation baseline.
 
 1. **Block definition** — [`configuration/blocks.yml`](src/main/resources/craftengine/fdaddon/configuration/blocks.yml):
    `blocks.fdaddon:example_block` with `behavior: - type: fdaddon:example_block`, a `block_item` so it can
@@ -473,36 +476,29 @@ stable names, importing `net.momirealms.craftengine.**` directly is safe (unlike
    To mark a block changed so CraftEngine re-saves it, call `blockEntity.world.blockEntityChanged(pos)`.
    For per-tick logic, override `createBlockEntityTicker(...)` on the controller.
 
-## Debug tooling — plug into `/fd debugtools` — `api.util.DebugToolExtension`
+## Debug tooling — plug into /fd debugtools
 
-Plug your block into FarmersDelight's debug command (mass-place / mass-activate / status / undo) without
-shipping a CLI of your own. See [`debug/ExampleDebugExtension.java`](src/main/java/com/example/fdaddon/debug/ExampleDebugExtension.java)
-for the wiring; one `DebugToolRegistry.register(...)` call in `onEnable` and admins get:
+Register an extension with DebugToolRegistry in onEnable. FD must be built with -PdebugTools=true to expose these commands; /fd stats remains available in the normal build.
 
+```text
+/fd debugtools place <target> [count] [spacing] [layers]
+/fd debugtools activate <target>
+/fd debugtools recipe place <target|all> <recipeId> [count]
+/fd debugtools recipe random <target|all> [count]
+/fd debugtools recipe validate
+/fd debugtools undo
+/fd stats addon <name>
 ```
-/fd debugtools place <name> [count] [spacing] [layers]   # mass-place your block
-/fd debugtools activate <name>                            # fill / tick / wake your tracked blocks
-/fd debugtools activate all                               # also triggers every registered extension
-/fd debugtools status                                     # appends your status() lines under the FD snapshot
-/fd debugtools undo                                       # reverts the last batch (your blocks too)
-```
 
-Implement four methods (interface in `com.huidu.farmersdelight.api.util`):
+See [ExampleDebugExtension.java](src/main/java/com/example/fdaddon/debug/ExampleDebugExtension.java). Implement name(), declare supportsPlacement()/supportsActivation(), and provide only the callbacks the block needs:
 
-- `name()` — the keyword (e.g. `"example_block"`). Becomes the tab-complete entry.
-- `place(player, origin, count, spacing, layers, undo)` — mass-place your block. **Call `undo.capture(loc)`
-  before each mutation** so `/fd debugtools undo` can revert it. Implementations typically grid as
-  `ceil(sqrt(count))` × `layers`.
-- `activate(player)` (optional) — wake placed blocks (e.g. fill ingredients, start fermentation, bump a
-  counter). Return the count actually transitioned.
-- `status(player)` (optional) — short lines added after FD's TickManager snapshot.
-- `cleanupBeforeUndo(loc)` (optional) — release in-memory tracking + remove block-entity NBT when this
-  location is being undone. Skip cheaply when the location isn't yours.
+- place(..., undo): capture the original state with undo.capture(loc) before modifying it. FD supplies one position per scheduled operation; keep the work on that position's owning region.
+- activateAt(player, location): activate the supplied position in the player's latest debug batch. The overload with an item resolver is available for filling inputs. Do not scan every registered block; the old activate(player) callback is not used.
+- recipeIds() and recipe(id, resolver): optional for processing stations. Resolve a complete valid setup before placement, preserve quantities and fluid requirements, and use the station's own rules for virtual fluid outputs. A functional block with no processing recipe can still support activation; leave recipeIds() empty.
+- status(player): concise MiniMessage lines returned by /fd stats addon <name>.
+- cleanupBeforeUndo(location): release tracking for that position. FD handles block restoration; do not manually erase unrelated blocks or saved data.
 
-Registration is safe even on a non-debug FD build (no `-PdebugTools=true`) — the registry is dormant and
-your methods are never called. Plugins with a central manager (e.g. FD's `StoveManager` or BAC's
-`KegManager`) should iterate the manager in `activate` / `cleanupBeforeUndo` rather than duplicate
-tracking; the template's example keeps an in-memory set since the demo block has no manager.
+all selects only targets supporting the requested operation. activate all still operates on the player's latest batch; it does not activate production blocks across the world. Activation does not independently undo already consumed or collected items.
 
 ## Credits
 

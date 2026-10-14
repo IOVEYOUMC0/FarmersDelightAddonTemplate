@@ -71,7 +71,9 @@ FarmersDelight 现在**不做混淆**（整个插件就是一份开源构建）�
 | `openRecipeEditor(player, typeId, recipeId)` | 为可编辑类型打开编辑器 |
 | `isHeatSource(block)` / `isConductor(block)` | 为你的烹饪方块进行热源查询 |
 | `runAtLocation(loc, task)` / `runLaterAtLocation(loc, task, ticks)` / `runRepeating(task, delay, period)` | Folia 安全的调度（重复任务返回一个 `ApiTask`） |
-| `awardCraftingExperience(player, loc, result, baseExp, source)` | 经验球 + AuraSkills + ProfessionCookingExperienceEvent |
+| `awardCraftingExperience(player, loc, result, baseExp, source)` | 按配置给予原版 / CE Leveler 经验 + ProfessionCookingExperienceEvent |
+
+当前接口与构建检查见[验证记录](docs/verification-template-2026-10-15.md)。
 
 ### 版本与功能门控
 
@@ -360,40 +362,35 @@ boolean has = FarmersDelightKnifeDrops.hasRule("cow");      // 来自任意来�
 
 ## 带交互 + 逐方块保存内容的自定义方块
 
-一个*会执行某些操作*并*按位置记住状态*的自定义方块，分散在三个地方 —— 全部属于 CraftEngine 自己的 API，而非 FarmersDelight（FD 不桥接方块注册；它桥接的是配方 / 调度 / 热源 / 经验）。由于 CraftEngine 的类保持稳定的名称，直接 import `net.momirealms.craftengine.**` 是安全的（不像 FD 的内部类）。
+有交互与逐位置状态的自定义方块由以下三部分组成。可直接使用 CE API，也可通过 FD 的 api.registry.ContentRegistration 注册并参与重载重应用。编译基线为 Paper 1.21.5 / CE 26.9.1，运行核对 CE 26.8.2～26.10；类名相同不代表方法兼容，新版可选 API 需要能力检测和回退。
 
 1. **方块定义** —— [`configuration/blocks.yml`](src/main/resources/craftengine/fdaddon/configuration/blocks.yml)：`blocks.fdaddon:example_block`，带有 `behavior: - type: fdaddon:example_block`、一个使其可被放置的 `block_item`，以及一个有序合成配方。碰撞来自宿主状态（`auto-state: note_block` → 实心）。无需声明 block-entity —— CraftEngine 会从 behavior 中检测到它（见下文）。
 2. **行为（Behavior）** —— [`ExampleBlockBehavior.java`](src/main/java/com/example/fdaddon/ExampleBlockBehavior.java)：`extends BlockBehavior implements EntityBlock`，重写 `useOnBlock(...)` 实现右键逻辑，并暴露一个静态的 `FACTORY`。在 `onLoad()` 中通过 `BlockBehaviors.register(Key.of("fdaddon:example_block"), FACTORY)` 注册 —— 必须在 CraftEngine 解析 `blocks.yml` *之前*完成，因为配置会通过 id 引用它。该行为是被所有已放置方块共享的**单例**，因此它本身不持有逐方块状态；在交互时它会查找被点击位置处的 block entity，并作用于该方块的控制器。
 3. **逐方块内容** —— [`ExampleBlockEntityController.java`](src/main/java/com/example/fdaddon/ExampleBlockEntityController.java)：因为该行为实现了 `EntityBlock`，CraftEngine 会为每个已放置方块创建一个 `BlockEntityController` 并**将其持久化在区块内**。你在 `saveCustomData(CompoundTag)` 中序列化你的状态，并在 `loadCustomData(CompoundTag)` 中恢复它 —— 这就是持久化的全部内容。**不要将方块状态存储在额外的 yml 中**；没有由插件管理的保存 / 加载生命周期可供写入。这正是 FD 的炖锅 / 煎锅 / 灶台保存其物品栏和进度的方式。要将某个方块标记为已更改以便 CraftEngine 重新保存它，请调用 `blockEntity.world.blockEntityChanged(pos)`。对于逐 tick 的逻辑，请在控制器上重写 `createBlockEntityTicker(...)`。
 
-## 调试工具 —— 接入 `/fd debugtools` —— `api.util.DebugToolExtension`
+## 调试工具 —— 接入 /fd debugtools
 
-把你的方块挂进 FarmersDelight 的调试命令（批量放置 / 批量激活 / 状态 / 撤销），无需自带 CLI。
-参见 [`debug/ExampleDebugExtension.java`](src/main/java/com/example/fdaddon/debug/ExampleDebugExtension.java)
-中的接线方式；在 `onEnable` 中一次 `DebugToolRegistry.register(...)`，管理员就能用：
+在 onEnable 中通过 DebugToolRegistry 注册扩展。FD 需使用 -PdebugTools=true 构建才提供调试命令；普通构建仍提供 /fd stats。
 
+```text
+/fd debugtools place <target> [count] [spacing] [layers]
+/fd debugtools activate <target>
+/fd debugtools recipe place <target|all> <recipeId> [count]
+/fd debugtools recipe random <target|all> [count]
+/fd debugtools recipe validate
+/fd debugtools undo
+/fd stats addon <name>
 ```
-/fd debugtools place <name> [count] [spacing] [layers]   # 批量放置你的方块
-/fd debugtools activate <name>                            # 填充 / tick / 激活你跟踪的方块
-/fd debugtools activate all                               # 同时触发所有已注册的扩展
-/fd debugtools status                                     # 在 FD 自身快照之后追加你的 status() 行
-/fd debugtools undo                                       # 撤销上一批（也会撤你的方块）
-```
 
-实现四个方法（接口在 `com.huidu.farmersdelight.api.util`）：
+参见 [ExampleDebugExtension.java](src/main/java/com/example/fdaddon/debug/ExampleDebugExtension.java)。实现 name()，声明 supportsPlacement()/supportsActivation()，再提供方块需要的回调：
 
-- `name()` —— 关键字（如 `"example_block"`），同时也是 tab 补全项。
-- `place(player, origin, count, spacing, layers, undo)` —— 批量放置你的方块。**在每次写入前先调
-  `undo.capture(loc)`**，这样 `/fd debugtools undo` 才能回滚。一般按 `ceil(sqrt(count))` × `layers` 排成网格。
-- `activate(player)`（可选）—— 唤醒已放置的方块（填料、开始发酵、累加计数器等）。返回实际被激活的数量。
-- `status(player)`（可选）—— 短行，附加在 FD TickManager 快照之后。
-- `cleanupBeforeUndo(loc)`（可选）—— 当该位置即将被撤销时，释放内存追踪 + 移除你方块的 block-entity NBT。
-  位置不属于你时要廉价地直接 return。
+- place(..., undo)：修改前调用 undo.capture(loc)。FD 按调度位置逐个调用；只在该位置所属区域内操作。
+- activateAt(player, location)：仅激活玩家最近调试批次中的指定位置；带物品 resolver 的重载可用于填料。不要遍历全世界；旧 activate(player) 回调已不使用。
+- recipeIds() 与 recipe(id, resolver)：加工站可选实现。放置前解析完整原料，保留数量、液量等约束；虚拟液体输出复用加工器自身判定。没有加工配方的功能方块仍可支持激活，recipeIds() 保持空列表即可。
+- status(player)：供 /fd stats addon <name> 展示的简短 MiniMessage 文本。
+- cleanupBeforeUndo(location)：释放该位置的追踪；FD 负责恢复方块，不手动删除无关方块或存档。
 
-即使 FD 是非 debug build（不带 `-PdebugTools=true`），注册也是安全的 —— 注册表此时处于 dormant
-状态，你的方法不会被调用。有中央 manager 的插件（如 FD 的 `StoveManager` 或 BAC 的 `KegManager`）
-应该在 `activate` / `cleanupBeforeUndo` 里直接遍历 manager，而不是另外维护一份追踪；模板里因为示例方块
-没有 manager，所以才在 extension 内部存了一个 set。
+all 仅选当前操作支持的目标；activate all 也只操作玩家最近的调试批次，不遍历生产方块。激活不能独立撤回已消耗或领取的物品。
 
 ## 致谢
 
