@@ -110,7 +110,7 @@ public final class ExampleFarmersDelightEventsListener implements Listener {
         if (location == null || location.getWorld() == null) {
             return;
         }
-        // We are on the region thread that owns the pot (see the event javadoc), so a read-only snapshot of
+        // The event runs on the pot's owner region, so a read-only snapshot of
         // the block is safe here without scheduling. See FDAddonTemplate#readCookingPot for the full pattern.
         CookingPotSnapshot pot = FarmersDelightBlocks.cookingPot(location.getBlock());
         double progress = pot == null ? 0.0D : pot.progressFraction();

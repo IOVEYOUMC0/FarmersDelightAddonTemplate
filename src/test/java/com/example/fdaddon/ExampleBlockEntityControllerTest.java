@@ -8,11 +8,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * The template is the shape an addon copies, so its example controller has to show the tick channel CraftEngine's
- * world layer drives — the synchronous {@code createBlockEntityTicker} — and must never declare the asynchronous
- * one, whose thread model is not established on a regionised server.
- */
+/** Checks the synchronous createBlockEntityTicker channel and rejects an asynchronous ticker. */
 class ExampleBlockEntityControllerTest {
 
     private static final Path CONTROLLER =

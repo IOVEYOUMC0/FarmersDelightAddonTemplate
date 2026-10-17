@@ -82,7 +82,7 @@ public final class ExampleBlockBehavior extends BlockBehavior implements EntityB
                 player.getWorld().getBlockAt(pos.x(), pos.y(), pos.z()), FDAddonTemplate.EXAMPLE_FLAG)) {
             return InteractionResult.PASS;
         }
-        // Look up the block entity at the clicked position and act on OUR controller. Per-block state never
+        // Resolve this behavior's controller at the clicked position. Per-block state never
         // lives on this singleton behavior — it lives in (and persists with) the block entity.
         CEWorld ceWorld = CraftEngineBlockAccess.getCEWorld(player.getWorld());
         if (ceWorld == null) {
@@ -93,7 +93,7 @@ public final class ExampleBlockBehavior extends BlockBehavior implements EntityB
             return InteractionResult.PASS;
         }
         int[] uses = {0};
-        // let(class, controllerId, action) resolves OUR controller even if the block stacks several.
+        // let(class, controllerId, action) selects the controller when a block has several.
         blockEntity.controller.let(ExampleBlockEntityController.class, this.controllerId,
                 controller -> { uses[0] = controller.increment(); });
         player.sendMessage(AddonLang.get("fdaddon.example_used", "count", uses[0]));

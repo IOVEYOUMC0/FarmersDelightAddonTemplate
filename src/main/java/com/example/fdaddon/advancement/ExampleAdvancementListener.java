@@ -12,14 +12,8 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 /**
- * Awards example advancements based on player actions. Two trigger paths:
- *   - FarmersDelightProduceEvent — fired by FarmersDelight (and any addon, e.g. BrewinAndChewin's
- *         keg) when a station hands a produced item to a player. The simplest hook for "the player got X".
- *   - PlayerItemConsumeEvent — fired when the player finishes eating/drinking an item. Used for
- *         the multiTask criteria: each soup variant ticks one criterion.
- *
- * On PlayerJoinEvent we proactively grant the root + show the tab so it appears in the player's
- * advancement screen immediately (otherwise UAA-managed tabs only appear after the first grant).
+ * Awards example advancements on produced-item and item-consumption events.
+ * Joining grants the root so the advancement tab is visible before any task is completed.
  */
 public final class ExampleAdvancementListener implements Listener {
 
