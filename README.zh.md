@@ -375,6 +375,7 @@ boolean has = FarmersDelightKnifeDrops.hasRule("cow");      // 来自任意来�
 ```text
 /fd debugtools place <target> [count] [spacing] [layers]
 /fd debugtools activate <target>
+/fd debugtools test <target|all> [count] [ticks]
 /fd debugtools recipe place <target|all> <recipeId> [count]
 /fd debugtools recipe random <target|all> [count]
 /fd debugtools recipe validate
@@ -391,6 +392,8 @@ boolean has = FarmersDelightKnifeDrops.hasRule("cow");      // 来自任意来�
 - cleanupBeforeUndo(location)：释放该位置的追踪；FD 负责恢复方块，不手动删除无关方块或存档。
 
 all 仅选当前操作支持的目标；activate all 也只操作玩家最近的调试批次，不遍历生产方块。激活不能独立撤回已消耗或领取的物品。
+
+`test` 会放置、填充并激活，再校验结果：内置工作站读回实际状态，附属目标按 `activateAt` 的返回值计数。未生效的填充/激活计入失败（`已激活 N 个，M 个失败`）并写控制台，不会当作成功。
 
 ## 致谢
 

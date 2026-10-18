@@ -483,6 +483,7 @@ Register an extension with DebugToolRegistry in onEnable. FD must be built with 
 ```text
 /fd debugtools place <target> [count] [spacing] [layers]
 /fd debugtools activate <target>
+/fd debugtools test <target|all> [count] [ticks]
 /fd debugtools recipe place <target|all> <recipeId> [count]
 /fd debugtools recipe random <target|all> [count]
 /fd debugtools recipe validate
@@ -499,6 +500,8 @@ See [ExampleDebugExtension.java](src/main/java/com/example/fdaddon/debug/Example
 - cleanupBeforeUndo(location): release tracking for that position. FD handles block restoration; do not manually erase unrelated blocks or saved data.
 
 all selects only targets supporting the requested operation. activate all still operates on the player's latest batch; it does not activate production blocks across the world. Activation does not independently undo already consumed or collected items.
+
+`test` places, fills and activates, then verifies the outcome: built-in stations are read back through their controllers, addon targets are counted by the `activateAt` return value. A fill or activation that did not take effect counts as failed (`activated N, M failed`) and is logged instead of being reported as a success.
 
 ## Credits
 
