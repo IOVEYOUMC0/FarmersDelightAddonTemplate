@@ -8,15 +8,8 @@
 # referenced as ../FarmersDelight/libs/...); `gradlew build` does the rest, and an api change that
 # breaks this addon fails right here.
 #
-# IOVEYOUMC0/Farmersdelight is a PRIVATE repository, so the checkout below needs a token:
-#   1. Create a PAT with read access to that repo (fine-grained: Contents -> Read-only).
-#   2. Add it to THIS repository as an Actions secret named FD_REPO_TOKEN.
-# Without it the FarmersDelight checkout fails with a 404 -- GitHub reports a missing private repo the
-# same way it reports one that does not exist, so a 404 here almost always means the secret, not the URL.
-#
-# Note: secrets are not exposed to pull requests opened from forks, so that job will fail this step.
-# Fine while these repos take no outside PRs; if that changes, gate the job on
-# github.event.pull_request.head.repo.full_name == github.repository.
+# The FarmersDelight repository is public and is checked out as a sibling; FD_REPO_TOKEN is optional and
+# only needed when that checkout is rate limited.
 name: CI
 
 on:
@@ -37,7 +30,7 @@ jobs:
       - name: Checkout FarmersDelight (sibling, provides the api jar + CraftEngine jars)
         uses: actions/checkout@v4
         with:
-          repository: IOVEYOUMC0/Farmersdelight
+          repository: IOVEYOUMC0/Farmersdelight-Plugin
           path: FarmersDelight
           token: ${{ secrets.FD_REPO_TOKEN || github.token }}
 
