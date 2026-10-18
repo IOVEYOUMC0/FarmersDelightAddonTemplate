@@ -7,6 +7,7 @@ import com.example.fdaddon.buff.ExampleCustomBuff;
 import com.example.fdaddon.debug.ExampleDebugExtension;
 import com.example.fdaddon.display.ExampleItemDisplayManager;
 import com.example.fdaddon.listener.ExampleFarmersDelightEventsListener;
+import com.example.fdaddon.listener.ExampleProtectionListener;
 import com.example.fdaddon.listener.ExampleReloadListener;
 import com.example.fdaddon.listener.RequiredPluginWatchdogListener;
 import com.example.fdaddon.recipe.ExampleRecipeFiller;
@@ -212,6 +213,12 @@ public final class FDAddonTemplate extends JavaPlugin {
         // 9) FarmersDelight lifecycle event bridges: cleanup / migrate / warmup / cooking-experience.
         getServer().getPluginManager().registerEvents(
                 new ExampleFarmersDelightEventsListener(getLogger()), this);
+
+        // 9b) Region protection for place and break. ExampleBlockBehavior gates interaction, but CraftEngine
+        //     fake blocks never fire the vanilla break event and placement is reported through its own event,
+        //     so the addon flag only covers all three paths when both events are gated here too. See
+        //     ExampleProtectionListener for the two events.
+        getServer().getPluginManager().registerEvents(new ExampleProtectionListener(), this);
 
         // 10) Guard against a live plugin-manager reload/unload (PlugMan and friends), which leaves
         //     CraftEngine-bound lambdas throwing after the classloader goes away. FD's guard cancels the
