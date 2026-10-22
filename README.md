@@ -476,6 +476,15 @@ newer APIs need version checks and a fallback. Paper 1.21.5 is the compilation b
    To mark a block changed so CraftEngine re-saves it, call `blockEntity.world.blockEntityChanged(pos)`.
    For per-tick logic, override `createBlockEntityTicker(...)` on the controller.
 
+## Building a full station
+
+The three parts above cover the block itself. A station with a container GUI, recipe book and editor composes the
+api types instead of copying FarmersDelight's station classes; the wiring order (scheduler, `ContainerGuiKernel`,
+`RecipeType`, editor, protection, tags, events) is documented in the wiki's
+[Building an addon station](https://github.com/IOVEYOUMC0/FarmersdelightPluginWiKi/blob/main/api-docs/en/station-kit.md)
+page. Reference implementations to read: Brewin' And Chewin's keg (`KegManager`, `KegRecipeType`), Crabber's
+Delight's crab trap (`CrabTrapBlockEntityController`) and Barbeque's Delight's grill (`StationBlockEntity`).
+
 ## Debug tooling — plug into /fd debugtools
 
 Register an extension with DebugToolRegistry in onEnable. FD must be built with -PdebugTools=true to expose these commands; /fd stats remains available in the normal build.
