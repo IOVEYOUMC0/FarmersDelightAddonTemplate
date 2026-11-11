@@ -10,7 +10,7 @@ rootProject.name = "fdaddontemplate"
 //
 // Both channels hand over the same artifact: the api-only jar (com/huidu/farmersdelight/api/**).
 // Keep the pinned version in step with the version the addon is written against.
-val farmersDelightApiVersion = "1.0.3"
+val farmersDelightApiVersion = "1.0.4"
 val farmersDelightRepo = "https://github.com/IOVEYOUMC0/Farmersdelight-Plugin.git"
 val farmersDelightCheckout = file("../FarmersDelight")
 

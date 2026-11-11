@@ -63,7 +63,7 @@ inside `com.huidu.farmersdelight.api.**` is the boundary itself, not renamed cla
    Either way the artifact is the api-only jar: it contains ONLY `com.huidu.farmersdelight.api.**` — no FD
    internals, not a runnable plugin — and the real FarmersDelight plugin provides the implementation at
    runtime. Nothing has to be vendored under `libs/` any more.
-2. `./gradlew build` (or `shadowJar`) → **`build/libs/fdaddontemplate-1.0.1.jar`**.
+2. `./gradlew build` (or `shadowJar`) → **`build/libs/fdaddontemplate-1.0.2.jar`**.
 3. Drop the jar in `plugins/` next to FarmersDelight + CraftEngine. This plugin uses `paper-plugin.yml`, whose
    `dependencies.server` entries (`CraftEngine` and `FarmersDelight`, both `load: BEFORE`, `required: true`,
    `join-classpath: true`) ensure load order and classpath access.

@@ -50,7 +50,7 @@ FarmersDelight 现在**不做混淆**（整个插件就是一份开源构建）�
    * **无本地检出**：同级目录不存在时，Gradle 退回到对 `https://github.com/IOVEYOUMC0/Farmersdelight-Plugin.git` 的 source dependency，按固定版本检出、就地构建并以同样方式解析。**这条通道需要网络。**
 
    两条通道拿到的都是 api-only jar，**只含** `com.huidu.farmersdelight.api.**` —— 不含 FD 内部类、不是可运行插件；真正的 FarmersDelight 插件会在运行时提供实现。不再需要把 jar 放进 `libs/` 手工同步。
-2. `./gradlew build`（或 `shadowJar`）→ **`build/libs/fdaddontemplate-1.0.1.jar`**。
+2. `./gradlew build`（或 `shadowJar`）→ **`build/libs/fdaddontemplate-1.0.2.jar`**。
 3. 将该 jar 放入 `plugins/` 目录，与 FarmersDelight + CraftEngine 并列。本插件使用 `paper-plugin.yml`，其中的 `dependencies.server` 条目（`CraftEngine` 与 `FarmersDelight`，均为 `load: BEFORE`、`required: true`、`join-classpath: true`）负责加载顺序与类路径访问。
 
 ## `FarmersDelightApi` 参考
