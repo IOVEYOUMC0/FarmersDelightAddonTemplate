@@ -72,7 +72,7 @@ tasks.build { dependsOn(tasks.shadowJar) }
 // Reuses the FarmersDelight tools/addon_testkit.py when this template is built inside the FD
 // workspace. Standalone copies can run the same script manually (see README); the task fails
 // loudly instead of silently skipping when the testkit is missing.
-val addonTestkit = file("../tools/addon_testkit.py")
+val addonTestkit = file("../FarmersDelight/tools/addon_testkit.py")
 tasks.register<Exec>("addonCheck") {
     group = "verification"
     description = "Run the FarmersDelight addon boundary/template checks"
