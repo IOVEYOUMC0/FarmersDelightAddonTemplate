@@ -11,7 +11,9 @@ repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.momirealms.net/releases/") // CraftEngine
-    mavenLocal()
+    mavenLocal {
+        content { includeGroup("com.huidu.farmersdelight") }
+    }
 }
 
 // The FarmersDelight api dependency is wired in settings.gradle.kts: it resolves to the sibling

@@ -9,7 +9,7 @@ import com.example.fdaddon.display.ExampleItemDisplayManager;
 import com.example.fdaddon.listener.ExampleFarmersDelightEventsListener;
 import com.example.fdaddon.listener.ExampleProtectionListener;
 import com.example.fdaddon.listener.ExampleReloadListener;
-import com.example.fdaddon.listener.RequiredPluginWatchdogListener;
+import com.huidu.farmersdelight.api.util.RequiredPluginWatchdog;
 import com.example.fdaddon.recipe.ExampleRecipeFiller;
 import com.example.fdaddon.rule.ExampleRecipeCondition;
 import com.example.fdaddon.rule.ExampleStationRule;
@@ -93,6 +93,14 @@ public final class FDAddonTemplate extends JavaPlugin {
 
     @Override
     public void onLoad() {
+        // This is the first FD-dependent statement in the addon. A copied template may run beside an FD build
+        // older than api revision 4 / compat-ce; probe first so the direct api.compat.ce references below never
+        // throw NoClassDefFoundError before onEnable has a chance to disable cleanly.
+        if (!TemplateApiProbe.supportsCompatCe()) {
+            getLogger().warning("FarmersDelight api revision >= 4 with compat-ce is required; "
+                    + "this addon will be disabled in onEnable.");
+            return;
+        }
         // Register the custom block behavior with CraftEngine BEFORE it parses blocks.yml, which references
         // the behavior by id: CraftEngine resolves that id while it reads the file, so a registration made
         // later never reaches that parse. ContentRegistration registers into the same registry, rejects an
@@ -101,7 +109,7 @@ public final class FDAddonTemplate extends JavaPlugin {
         // duplicate (a repeat without the guard would fail the load).
         Key exampleBlock = Key.of(NS + ":example_block");
         if (!ContentRegistration.isRegistered(exampleBlock)) {
-            ContentRegistration.registerBlockBehavior(exampleBlock, ExampleBlockBehavior.FACTORY);
+            ContentRegistration.registerBlockBehavior(this, exampleBlock, ExampleBlockBehavior.FACTORY);
         }
         // Copy this addon's bundled CraftEngine resources into plugins/CraftEngine/resources/<namespace>/
         // (install-if-missing). Do this in onLoad so the files exist before CraftEngine scans them.
@@ -133,6 +141,14 @@ public final class FDAddonTemplate extends JavaPlugin {
             return;
         }
         System.setProperty(RELOAD_GUARD_PROPERTY, "1");
+
+        // onLoad skipped all FD-dependent registration when the runtime API was too old. Disable cleanly here
+        // before AddonLanguage/config bootstrap touch any api class that an old FD does not have.
+        if (!TemplateApiProbe.supportsCompatCe()) {
+            getLogger().severe("FarmersDelight api revision >= 4 with compat-ce is required; disabling this addon.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
         saveDefaultConfig();
         // Resolve console-message language from the bundled lang files before any addon log line is emitted.
@@ -237,7 +253,7 @@ public final class FDAddonTemplate extends JavaPlugin {
         // 11) Cascade a runtime disable of a required plugin: if FarmersDelight or CraftEngine goes down
         //     while the server keeps running, every task and listener here would start throwing
         //     NoClassDefFoundError. Disable this addon cleanly instead, one level below FD's own watchdog.
-        getServer().getPluginManager().registerEvents(new RequiredPluginWatchdogListener(this), this);
+        getServer().getPluginManager().registerEvents(new RequiredPluginWatchdog(this), this);
 
         getLogger().info(AddonLang.get("fdaddon.enabled"));
     }
@@ -250,8 +266,13 @@ public final class FDAddonTemplate extends JavaPlugin {
         if (buffBossbarTask != null) {
             buffBossbarTask.cancel();
         }
-        if (FarmersDelightApi.get().isAvailable()) {
-            // Clean up what you registered.
+        if (TemplateApiProbe.supportsCompatCe() && FarmersDelightApi.get().isAvailable()) {
+            // Clean up what you registered. ContentRegistration/Language/namespace are held by FD's class
+            // loader; without these calls a disabled addon keeps its plugin/class loader reachable and a later
+            // FD reload can replay stale content factories.
+            ContentRegistration.unregisterAll(this);
+            FarmersDelightApi.get().unregisterAddonBlockNamespace(NS);
+            AddonLang.uninstall();
             FarmersDelightApi.get().unregisterRecipeType(NS + ":example");
             CustomBuffRegistry.unregister(exampleBuff);
             for (Player p : getServer().getOnlinePlayers()) {

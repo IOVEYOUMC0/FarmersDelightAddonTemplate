@@ -20,6 +20,10 @@ authors:
 dependencies:
   server:
     CraftEngine:
+      # BEFORE: CraftEngine is a hard dependency and must load first. It parses packs in its own onEnable;
+      # this addon's onLoad runs after CE's load pass and before the enable pass, so the pack release and
+      # claim are complete by the time CE scans for them. Declare BEFORE explicitly; AFTER would place CE
+      # behind the addon and can close a third-party load-order loop.
       load: BEFORE
       required: true
       join-classpath: true

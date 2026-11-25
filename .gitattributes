@@ -3,3 +3,5 @@
 *.yml   text eol=lf
 *.yaml  text eol=lf
 *.json  text eol=lf
+# Java sources are stored with LF.
+*.java  text eol=lf
