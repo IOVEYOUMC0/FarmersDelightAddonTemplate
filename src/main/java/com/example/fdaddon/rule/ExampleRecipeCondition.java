@@ -8,9 +8,9 @@ import org.bukkit.GameMode;
 /**
  * Example addon recipe condition: spectators cannot trigger FD recipe matches.
  *
- * <p>Conditions are global in phase one, so return true for every recipe the condition does not
- * want to gate. Use {@link RecipeContext#recipeType()} / {@link RecipeContext#recipeId()} to scope
- * a condition to your own recipes.</p>
+ * Conditions are global in phase one, so return true for every recipe the condition does not
+ * want to gate. Use RecipeContext.recipeType / RecipeContext.recipeId to scope
+ * a condition to your own recipes.
  */
 public final class ExampleRecipeCondition implements RecipeCondition {
 

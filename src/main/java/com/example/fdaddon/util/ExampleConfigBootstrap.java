@@ -1,9 +1,7 @@
 package com.example.fdaddon.util;
 
-import com.huidu.farmersdelight.api.config.ConfigFileUpdater;
-import com.huidu.farmersdelight.api.config.ConfigUpdateNotices;
+import com.huidu.farmersdelight.api.config.AddonConfigBootstrap;
 import com.huidu.farmersdelight.api.config.ConfigUpdatePolicy;
-import com.huidu.farmersdelight.api.config.ConfigUpdateReport;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -36,10 +34,10 @@ public final class ExampleConfigBootstrap {
             .registrySection("food-effects.comfort", "food-effects.nourishment")
             .build();
 
-    private final JavaPlugin plugin;
+    private final AddonConfigBootstrap config;
 
     public ExampleConfigBootstrap(JavaPlugin plugin) {
-        this.plugin = plugin;
+        this.config = new AddonConfigBootstrap(plugin);
     }
 
     /**
@@ -49,14 +47,6 @@ public final class ExampleConfigBootstrap {
      * the family's shared notices, so this addon reads exactly like every other plugin in the family.
      */
     public void updateConfig() {
-        ConfigUpdateReport report;
-        try {
-            report = ConfigFileUpdater.updateMainConfig(plugin, POLICY);
-        } catch (Exception e) {
-            plugin.getLogger().warning(AddonLang.get("fdaddon.config_update_failed",
-                    "error", String.valueOf(e.getMessage())));
-            return;
-        }
-        ConfigUpdateNotices.logAll(plugin, "config.yml", report);
+        config.updateMainConfig(POLICY);
     }
 }

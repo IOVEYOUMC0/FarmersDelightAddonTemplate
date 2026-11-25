@@ -25,8 +25,8 @@ class ExampleConfigNoticeTest {
     void theBootstrapLogsThroughTheSharedNotices() throws IOException {
         String flat = Files.readString(BOOTSTRAP).replaceAll("\\s+", " ");
 
-        assertTrue(flat.contains("ConfigUpdateNotices.logAll(plugin, \"config.yml\", report)"),
-                "the report goes to the one place that knows the sequence");
+        assertTrue(flat.contains("config.updateMainConfig(POLICY)"),
+                "the report goes through the shared bootstrap");
         assertFalse(flat.contains("AddonLang.get(\"fdaddon.config_key_migrated\""),
                 "the template does not ship its own copy of the four lines");
     }

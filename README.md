@@ -58,7 +58,10 @@ inside `com.huidu.farmersdelight.api.**` is the boundary itself, not renamed cla
      it, so `gradlew` builds its `:apiJar` and substitutes it for the coordinate. No fetch, works offline.
    * **No checkout.** Without that sibling, Gradle falls back to a source dependency on
      `https://github.com/IOVEYOUMC0/Farmersdelight-Plugin.git`, checked out at the pinned version, built in
-     place and resolved the same way. **This channel needs network access.**
+     place and resolved the same way. **This channel needs network access and a published version tag.**
+   * **No checkout, no tag yet.** Run `FarmersDelight/gradlew publishToMavenLocal` once and this build
+     resolves the api jar from `~/.m2`; `settings.gradle.kts` skips the Git source-dependency repository
+     when that local jar exists. This is the bootstrap path while the pinned tag is not published.
 
    Either way the artifact is the api-only jar: it contains ONLY `com.huidu.farmersdelight.api.**` — no FD
    internals, not a runnable plugin — and the real FarmersDelight plugin provides the implementation at
