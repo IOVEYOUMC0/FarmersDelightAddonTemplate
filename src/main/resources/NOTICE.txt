@@ -1,0 +1,3 @@
+FDAddonTemplate
+Original code of the FarmersDelightPlugin workspace, licensed under AGPL-3.0.
+The full license text is bundled as LICENSE in this jar.
