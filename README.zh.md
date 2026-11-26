@@ -53,6 +53,39 @@ FarmersDelight 现在**不做混淆**（整个插件就是一份开源构建）�
 2. `./gradlew build`（或 `shadowJar`）→ **`build/libs/fdaddontemplate-1.0.2.jar`**。
 3. 将该 jar 放入 `plugins/` 目录，与 FarmersDelight + CraftEngine 并列。本插件使用 `paper-plugin.yml`，其中的 `dependencies.server` 条目（`CraftEngine` 与 `FarmersDelight`，均为 `load: BEFORE`、`required: true`、`join-classpath: true`）负责加载顺序与类路径访问。
 
+### 附属自检（addonCheck）
+
+在 FarmersDelight 工作区内，模板会复用 FD 仓库的 `tools/addon_testkit.py`：
+
+```bash
+./gradlew addonCheck
+```
+
+`addonCheck` 先执行正常 `build`，再检查：
+
+- Java 源码中的 FarmersDelight 引用是否都留在 `com.huidu.farmersdelight.api.**`
+- `paper-plugin.yml` 是否声明 `FarmersDelight` 的 `required: true` 与 `join-classpath: true`
+- 是否使用 `apiVersion()` / `hasFeature()` 做能力门控
+
+独立复制模板时没有同级 `tools/` 目录，任务会明确失败；把 `tools/addon_testkit.py` 一并复制过去后，可手动运行：
+
+```bash
+python tools/addon_testkit.py . --skip-build
+```
+
+需要真实启动验证时，用 smoke（源测试服只读，不会启动/修改它）：
+
+```bash
+python ../tools/addon_testkit.py . --skip-build --smoke \
+  --server-dir ../test1 \
+  --fd-jar ../FarmersDelight/build/libs/farmersdelight-1.0.4.jar \
+  --server-jar ../test1/shiroha.jar \
+  --java "$JAVA_HOME/bin/java"
+```
+
+smoke 会在附属的 `build/addon-testkit-smoke/` 复制服务端/依赖并启动一个随机端口的隔离实例，
+断言附属 `Enabling`、`Done (`，然后发送 `stop`；完整日志在同目录 `console.log`。
+
 ## `FarmersDelightApi` 参考
 
 通过 `FarmersDelightApi.get()` 获取单例。**每次调用前都要用 `isAvailable()` 加以保护。**

@@ -68,3 +68,21 @@ tasks.test {
 
 tasks.jar { enabled = false }
 tasks.build { dependsOn(tasks.shadowJar) }
+
+// Reuses the FarmersDelight tools/addon_testkit.py when this template is built inside the FD
+// workspace. Standalone copies can run the same script manually (see README); the task fails
+// loudly instead of silently skipping when the testkit is missing.
+val addonTestkit = file("../tools/addon_testkit.py")
+tasks.register<Exec>("addonCheck") {
+    group = "verification"
+    description = "Run the FarmersDelight addon boundary/template checks"
+    dependsOn(tasks.build)
+    workingDir = projectDir
+    val python = if (System.getProperty("os.name").lowercase().contains("win")) "python" else "python3"
+    commandLine(python, addonTestkit.absolutePath, projectDir.absolutePath, "--skip-build")
+    doFirst {
+        if (!addonTestkit.isFile) {
+            throw GradleException("addon_testkit.py not found at ${addonTestkit.absolutePath}; copy it from the FarmersDelight tools/ directory")
+        }
+    }
+}

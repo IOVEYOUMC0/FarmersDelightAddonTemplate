@@ -1,7 +1,7 @@
 package com.example.fdaddon;
 
 import com.example.fdaddon.util.AddonLang;
-import com.huidu.farmersdelight.api.block.CraftEngineBlockAccess;
+import com.huidu.farmersdelight.api.compat.ce.CraftEngineBlockAccess;
 import com.huidu.farmersdelight.api.util.ProtectionCompat;
 import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;

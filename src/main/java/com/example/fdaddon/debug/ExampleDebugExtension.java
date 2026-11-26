@@ -1,6 +1,6 @@
 package com.example.fdaddon.debug;
 
-import com.huidu.farmersdelight.api.block.CraftEngineBlockAccess;
+import com.huidu.farmersdelight.api.compat.ce.CraftEngineBlockAccess;
 import com.example.fdaddon.ExampleBlockEntityController;
 import com.example.fdaddon.FDAddonTemplate;
 import com.huidu.farmersdelight.api.util.DebugToolExtension;

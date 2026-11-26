@@ -11,6 +11,7 @@ import com.example.fdaddon.listener.ExampleProtectionListener;
 import com.example.fdaddon.listener.ExampleReloadListener;
 import com.example.fdaddon.listener.RequiredPluginWatchdogListener;
 import com.example.fdaddon.recipe.ExampleRecipeFiller;
+import com.example.fdaddon.rule.ExampleRecipeCondition;
 import com.example.fdaddon.util.AddonLang;
 import com.example.fdaddon.util.ExampleConfigBootstrap;
 import com.example.fdaddon.util.ExampleFoodEffectRegistrar;
@@ -27,8 +28,9 @@ import com.huidu.farmersdelight.api.item.FarmersDelightItems;
 import com.huidu.farmersdelight.api.recipe.FarmersDelightRecipeDiscovery;
 import com.huidu.farmersdelight.api.recipe.FarmersDelightRecipes;
 import com.huidu.farmersdelight.api.recipe.RecipeInfo;
-import com.huidu.farmersdelight.api.registry.ContentRegistration;
+import com.huidu.farmersdelight.api.compat.ce.ContentRegistration;
 import com.huidu.farmersdelight.api.resource.CraftEngineResources;
+import com.huidu.farmersdelight.api.rule.RecipeConditions;
 import com.huidu.farmersdelight.api.scheduler.ApiTask;
 import com.huidu.farmersdelight.api.text.FarmersDelightMessages;
 import com.huidu.farmersdelight.api.text.FarmersDelightText;
@@ -150,6 +152,10 @@ public final class FDAddonTemplate extends JavaPlugin {
         // Count this addon's CraftEngine blocks in FarmersDelight's block-state usage report.
         FarmersDelightApi.get().registerAddonBlockNamespace(NS);
 
+        // Optional: register a composable FD recipe condition. Conditions are global in phase one;
+        // scope by RecipeContext.recipeType()/recipeId() when only your recipes should be gated.
+        RecipeConditions.register(ExampleRecipeCondition.INSTANCE);
+
         // Version + feature gating. isAvailable() answers "is FD running"; apiVersion() / hasFeature() answer
         // "does this FD build expose the surface I compiled against". Prefer these over the plugin's version
         // string: the api version tracks the addon-facing surface, the plugin version tracks content. On a
@@ -251,6 +257,7 @@ public final class FDAddonTemplate extends JavaPlugin {
             if (displays != null) displays.hideAll();
             foodEffects.clear();
             ExampleAdvancements.unregister();
+            RecipeConditions.unregister(ExampleRecipeCondition.ID);
         }
         DebugToolRegistry.unregister("example_block");
     }
