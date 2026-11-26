@@ -1,6 +1,6 @@
 package com.example.fdaddon.util;
 
-import com.huidu.farmersdelight.api.util.TooltipUtils;
+import com.huidu.farmersdelight.api.compat.ce.TooltipUtils;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.core.item.Item;
 import org.bukkit.inventory.ItemStack;
