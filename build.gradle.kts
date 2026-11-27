@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.example.fdaddon"
-version = "1.0.2"
+version = "1.2.0"
 
 repositories {
     mavenCentral()
@@ -24,14 +24,28 @@ repositories {
 // against another release without editing this file:  gradlew build -PceVersion=26.8.2
 val ceVersion = providers.gradleProperty("ceVersion").getOrElse("26.9.1")
 
+// Snapshot builds (26.10/26.11-SNAPSHOT) are not on Maven: -PceJar points at a local plugin jar (it already
+// contains the bukkit and core classes) and -PceLibraries at the relocated libraries when the build keeps them
+// outside the jar:  gradlew build -PceJar=C:\path\craft-engine-paper-plugin-26.11-SNAPSHOT.jar
+val ceJar = providers.gradleProperty("ceJar")
+val ceLibraries = providers.gradleProperty("ceLibraries")
+
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.5-R0.1-SNAPSHOT")
     compileOnly("org.jetbrains:annotations:26.1.0")
 
-    // CraftEngine from the official Maven repository.
-    compileOnly("net.momirealms:craft-engine-bukkit:$ceVersion")
-    // The bukkit artifact no longer bundles core, so the core classes come from their own jar.
-    compileOnly("net.momirealms:craft-engine-core:$ceVersion")
+    if (ceJar.isPresent) {
+        logger.lifecycle("Compiling CraftEngine against the local JAR ${ceJar.get()}")
+        compileOnly(files(ceJar.get()))
+        if (ceLibraries.isPresent) {
+            compileOnly(ceLibraries.map { dir -> fileTree(dir) { include("**/*.jar") } })
+        }
+    } else {
+        // CraftEngine from the official Maven repository.
+        compileOnly("net.momirealms:craft-engine-bukkit:$ceVersion")
+        // The bukkit artifact no longer bundles core, so the core classes come from their own jar.
+        compileOnly("net.momirealms:craft-engine-core:$ceVersion")
+    }
 
     // The same runner the other plugins in the family test with, so a copied test runs here too.
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
