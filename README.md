@@ -66,12 +66,25 @@ inside `com.huidu.farmersdelight.api.**` is the boundary itself, not renamed cla
    Either way the artifact is the api-only jar: it contains ONLY `com.huidu.farmersdelight.api.**` — no FD
    internals, not a runnable plugin — and the real FarmersDelight plugin provides the implementation at
    runtime. Nothing has to be vendored under `libs/` any more.
-2. `./gradlew build` (or `shadowJar`) → **`build/libs/fdaddontemplate-1.0.2.jar`**.
+2. `./gradlew build` (or `shadowJar`) → **`build/libs/fdaddontemplate-1.2.0.jar`**.
 3. Drop the jar in `plugins/` next to FarmersDelight + CraftEngine. This plugin uses `paper-plugin.yml`, whose
    `dependencies.server` entries (`CraftEngine` and `FarmersDelight`, both `load: BEFORE`, `required: true`,
    `join-classpath: true`) ensure load order and classpath access.
 
-Current API/build checks: [verification](docs/verification-template-2026-10-15.md).
+**Compiling against a CraftEngine snapshot.** 26.10 and 26.11 snapshots are not published to Maven, so point
+the build at a local CraftEngine plugin jar instead of the `ceVersion` artifacts:
+
+```bash
+./gradlew build -PceJar=/path/to/craft-engine-paper-plugin-26.11-SNAPSHOT.jar
+# plus this when that build keeps relocated libraries outside the jar:
+#   -PceLibraries=/path/to/plugins/CraftEngine/libs
+```
+
+The plugin jar already contains the bukkit and core classes, so it replaces both Maven artifacts. `-PceVersion`
+still selects a Maven release for ordinary builds. Inside the FarmersDelight workspace the property also reaches
+the sibling FarmersDelight composite build, which needs `-PceLibraries` as well (as shown above).
+
+Current API/build checks: [verification](docs/verification-template-2026-11-28.md).
 
 ## `FarmersDelightApi` reference
 
@@ -457,8 +470,9 @@ A custom block that *does something* and *remembers state per position* is split
 all of it CraftEngine's own API. FarmersDelight publishes `api.registry.ContentRegistration` for callers
 that want its id rules and its re-apply pass, but registering a block behaviour with CraftEngine directly is
 equally valid; FD's own bridging covers recipes / scheduling / heat / XP. Compile against CE 26.9.1 and
-verify symbols on 26.8.2–26.10. Stable class names alone do not guarantee API compatibility; optional
-newer APIs need version checks and a fallback. Paper 1.21.5 is the compilation baseline.
+verify symbols on 26.8.2–26.11 (26.11-SNAPSHOT was checked on 2026-11-28 and is a drop-in: FarmersDelight
+compiles and boots against it without API changes). Stable class names alone do not guarantee API
+compatibility; optional newer APIs need version checks and a fallback. Paper 1.21.5 is the compilation baseline.
 
 1. **Block definition** — [`configuration/blocks.yml`](src/main/resources/craftengine/fdaddon/configuration/blocks.yml):
    `blocks.fdaddon:example_block` with `behavior: - type: fdaddon:example_block`, a `block_item` so it can
@@ -478,6 +492,28 @@ newer APIs need version checks and a fallback. Paper 1.21.5 is the compilation b
    cooking pot / skillet / stove keep their inventories and progress.
    To mark a block changed so CraftEngine re-saves it, call `blockEntity.world.blockEntityChanged(pos)`.
    For per-tick logic, override `createBlockEntityTicker(...)` on the controller.
+4. **Storing items? Drop them safely.** A drop call that did not throw is not proof of delivery: Paper returns
+   an entity wrapper even when another plugin cancels `ItemSpawnEvent`. Use
+   [`DropSafety.spawnVerified(...)`](src/main/java/com/example/fdaddon/util/DropSafety.java) and only clear the
+   stored stack after it returns true. On a break path, keep the undelivered stacks and cancel the break; on a
+   removal path that cannot be vetoed (explosion, another plugin replacing the block), persist the remaining
+   stacks to a recovery file — FD's `StationDropRecovery` / `DropRecoveryArchive` are the reference
+   implementations. For handing a stack to a player, use FD's `ItemDelivery.giveOrDrop`, which already verifies
+   the overflow drop. Never clear a container before its contents are confirmed in the world.
+5. **Container example** — `fdaddon:example_container` in `blocks.yml`, with
+   [`ExampleContainerBehavior`](src/main/java/com/example/fdaddon/ExampleContainerBehavior.java),
+   [`ExampleContainerController`](src/main/java/com/example/fdaddon/ExampleContainerController.java) and
+   [`ExampleContainerBreakListener`](src/main/java/com/example/fdaddon/listener/ExampleContainerBreakListener.java):
+   two item slots persisted through `ItemStackUtils`, right-click with an item to store one and with an empty
+   hand to take one back. It demonstrates the whole drop contract: the break listener asks the controller to
+   drop and cancels the break when a spawn is refused; `onRemove()` (explosion, another plugin replacing the
+   block) drops what it can and writes the rest to
+   `plugins/FDAddonTemplate/container-drop-recovery/*.nbt`; the hand-back uses `ItemDelivery.giveOrDrop`. The
+   reusable pieces are [`StoredContents`](src/main/java/com/example/fdaddon/util/StoredContents.java) (slots +
+   confirmed drop), [`DropSafety`](src/main/java/com/example/fdaddon/util/DropSafety.java) (verified spawn) and
+   [`DropRecoveryArchive`](src/main/java/com/example/fdaddon/util/DropRecoveryArchive.java) (compressed-NBT
+   archive). `StoredContentsTest` / `DropRecoveryArchiveTest` / `ExampleContainerWiringTest` cover the failure
+   paths.
 
 ## Building a full station
 

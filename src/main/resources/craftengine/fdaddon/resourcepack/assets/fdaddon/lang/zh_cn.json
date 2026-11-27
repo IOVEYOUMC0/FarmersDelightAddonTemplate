@@ -1,6 +1,7 @@
 {
   "item.fdaddon.example_jerky": "示例肉干",
   "block.fdaddon.example_block": "示例方块",
+  "block.fdaddon.example_container": "示例容器",
   "buff.fdaddon.example": "示例增益",
   "fdaddon.advancement.root": "FD 附属模板",
   "fdaddon.advancement.root.desc": "来自 FD 附属模板的示例成就 tab。",

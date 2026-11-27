@@ -46,6 +46,55 @@ blocks:
       - type: fdaddon:example_block
     loot:
       template: default:loot_table/self
+  # Container example: stores two item slots in the block entity and drops them safely. It reuses the
+  # counter block's model so the template ships no extra art.
+  fdaddon:example_container:
+    settings:
+      hardness: 2.0
+      tags:
+        - minecraft:mineable/pickaxe
+      sounds:
+        break: minecraft:block.stone.break
+        place: minecraft:block.stone.place
+        step: minecraft:block.stone.step
+    states:
+      properties:
+        facing:
+          type: 4-direction
+          default: north
+      appearances:
+        north:
+          auto-state: note_block
+          model:
+            path: fdaddon:block/example_block
+        east:
+          auto-state: note_block
+          model:
+            path: fdaddon:block/example_block
+            y: 90
+        south:
+          auto-state: note_block
+          model:
+            path: fdaddon:block/example_block
+            y: 180
+        west:
+          auto-state: note_block
+          model:
+            path: fdaddon:block/example_block
+            y: 270
+      variants:
+        facing=north:
+          appearance: north
+        facing=east:
+          appearance: east
+        facing=south:
+          appearance: south
+        facing=west:
+          appearance: west
+    behavior:
+      - type: fdaddon:example_container
+    loot:
+      template: default:loot_table/self
 
 items:
   fdaddon:example_block:
@@ -55,6 +104,13 @@ items:
     behavior:
       type: block_item
       block: fdaddon:example_block
+  fdaddon:example_container:
+    data:
+      item-name: <!i><l10n:block.fdaddon.example_container>
+    model: fdaddon:block/example_block
+    behavior:
+      type: block_item
+      block: fdaddon:example_container
 
 recipes:
   fdaddon:example_block:
@@ -68,4 +124,16 @@ recipes:
       S: "minecraft:cobblestone"
     result:
       id: fdaddon:example_block
+      count: 1
+  fdaddon:example_container:
+    type: shaped
+    category: building
+    pattern:
+      - "SSS"
+      - "S S"
+      - "SSS"
+    ingredients:
+      S: "minecraft:cobblestone"
+    result:
+      id: fdaddon:example_container
       count: 1

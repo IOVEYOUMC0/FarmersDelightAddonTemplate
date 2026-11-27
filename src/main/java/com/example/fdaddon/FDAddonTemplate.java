@@ -6,6 +6,7 @@ import com.example.fdaddon.buff.ExampleBuffBossbar;
 import com.example.fdaddon.buff.ExampleCustomBuff;
 import com.example.fdaddon.debug.ExampleDebugExtension;
 import com.example.fdaddon.display.ExampleItemDisplayManager;
+import com.example.fdaddon.listener.ExampleContainerBreakListener;
 import com.example.fdaddon.listener.ExampleFarmersDelightEventsListener;
 import com.example.fdaddon.listener.ExampleProtectionListener;
 import com.example.fdaddon.listener.ExampleReloadListener;
@@ -70,6 +71,8 @@ import java.util.Map;
  *   - ExampleFoodEffectRegistrar — config-driven Comfort / Nourishment registration.
  *   - ExampleBlockBehavior + ExampleBlockEntityController — a custom block with per-block
  *       state persisted via a CE block entity.
+ *   - ExampleContainerBehavior + ExampleContainerController — a custom container: item storage, verified
+ *       drops, a break listener that vetoes a refused drop and a recovery archive for unavoidable removals.
  *   - ExampleRecipeType — a custom recipe type with its own book layout.
  *
  * Delete or rename what you don't need.
@@ -79,9 +82,11 @@ public final class FDAddonTemplate extends JavaPlugin {
     // Recipe ids you register should be namespaced to your addon so they never clash with other addons.
     public static final String NS = "fdaddon";
 
-    // WorldGuard StateFlag registered via ProtectionCompat.registerCustomFlag. Admins gate placing, breaking
+    // WorldGuard StateFlags registered via ProtectionCompat.registerCustomFlag. Admins gate placing, breaking
     // and interacting with your custom block per region; a null flag would query only the master flag.
     public static final String EXAMPLE_FLAG = NS + "-example";
+    // The container example gets its own flag so an operator can protect the two blocks differently.
+    public static final String CONTAINER_FLAG = NS + "-example-container";
 
     private ApiTask heartbeat;
     private final ExampleConfigBootstrap configBootstrap = new ExampleConfigBootstrap(this);
@@ -111,6 +116,12 @@ public final class FDAddonTemplate extends JavaPlugin {
         if (!ContentRegistration.isRegistered(exampleBlock)) {
             ContentRegistration.registerBlockBehavior(this, exampleBlock, ExampleBlockBehavior.FACTORY);
         }
+        // Second example: a container block with item storage and a loss-proof drop path. The behavior id is
+        // referenced from blocks.yml exactly like the counter block above.
+        Key exampleContainer = Key.of(NS + ":example_container");
+        if (!ContentRegistration.isRegistered(exampleContainer)) {
+            ContentRegistration.registerBlockBehavior(this, exampleContainer, ExampleContainerBehavior.FACTORY);
+        }
         // Copy this addon's bundled CraftEngine resources into plugins/CraftEngine/resources/<namespace>/
         // (install-if-missing). Do this in onLoad so the files exist before CraftEngine scans them.
         CraftEngineResources.release(this, NS,
@@ -122,6 +133,7 @@ public final class FDAddonTemplate extends JavaPlugin {
         // registry. Guard on FD being loaded, since the facade lives inside the FarmersDelight plugin.
         if (getServer().getPluginManager().getPlugin("FarmersDelight") != null) {
             ProtectionCompat.registerCustomFlag(EXAMPLE_FLAG);
+            ProtectionCompat.registerCustomFlag(CONTAINER_FLAG);
         }
     }
 
@@ -187,8 +199,6 @@ public final class FDAddonTemplate extends JavaPlugin {
             apiVersion = 0;
         }
         boolean hasStationQuery = apiVersion >= 1 && FarmersDelightApi.get().hasFeature("station-query");
-        getLogger().info(AddonLang.get("fdaddon.api_version",
-                "version", apiVersion, "station_query", hasStationQuery));
 
         // 1) Register your addon's recipe TYPE so its recipes can be shown in a recipe book. ExampleRecipeType
         //    also provides its OWN book layout (list/detail) — see showRecipes() to open it independently.
@@ -244,6 +254,9 @@ public final class FDAddonTemplate extends JavaPlugin {
         //     so the addon flag only covers all three paths when both events are gated here too. See
         //     ExampleProtectionListener for the two events.
         getServer().getPluginManager().registerEvents(new ExampleProtectionListener(), this);
+        // 9c) Break path for the container example: a refused spawn cancels the break so the block keeps the
+        //     undelivered stacks. Removal that cannot be cancelled is handled by the controller's onRemove().
+        getServer().getPluginManager().registerEvents(new ExampleContainerBreakListener(), this);
 
         // 10) Guard against a live plugin-manager reload/unload (PlugMan and friends), which leaves
         //     CraftEngine-bound lambdas throwing after the classloader goes away. FD's guard cancels the
@@ -255,7 +268,12 @@ public final class FDAddonTemplate extends JavaPlugin {
         //     NoClassDefFoundError. Disable this addon cleanly instead, one level below FD's own watchdog.
         getServer().getPluginManager().registerEvents(new RequiredPluginWatchdog(this), this);
 
-        getLogger().info(AddonLang.get("fdaddon.enabled"));
+        // One boot line: the addon version and the FD api revision a support request needs. Per-feature detail
+        // belongs in that feature's own debug output, not in the startup log.
+        getLogger().info(AddonLang.get("fdaddon.enabled",
+                "version", getPluginMeta().getVersion(),
+                "api_version", apiVersion,
+                "station_query", hasStationQuery));
     }
 
     @Override

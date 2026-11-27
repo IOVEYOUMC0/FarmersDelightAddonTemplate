@@ -5,9 +5,15 @@
 # 例如 ExampleRecipeType 的配方书标题与按钮。
 fdaddon:
   example_used: "已使用这个方块 {count} 次——计数保存在方块实体里。"
+  example_container_stored: "已存入一个物品。"
+  example_container_taken: "已取回一个物品。"
+  example_container_full: "这个容器已满。"
+  example_container_empty: "这个容器是空的。"
+  example_container_drop_refused: "未破坏：有物品无法掉落，内容物已保留。请在允许掉落物品后重试。"
+  example_container_recovery_saved: "无法掉落的容器内容已存档：{file}（方块 {pos}）。"
+  example_container_recovery_failed: "{pos} 处的容器内容无法掉落也无法存档；请检查日志原因。"
   farmersdelight_unavailable: "FarmersDelight 不可用；附属功能已禁用。"
-  api_version: "FarmersDelight api v{version}（station-query={station_query}）。"
-  enabled: "FDAddonTemplate 已启用。"
+  enabled: "FDAddonTemplate {version} 已启用 | FarmersDelight api v{api_version}（station-query={station_query}）"
   reloaded: "已随 FarmersDelight 重载（原因：{reason}）。"
   recipes_loaded: "已加载 {count} 条 FarmersDelight 配方。"
   food_effects_loaded: "已加载 {count} 个食物效果配置。"

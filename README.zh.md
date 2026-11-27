@@ -50,8 +50,18 @@ FarmersDelight 现在**不做混淆**（整个插件就是一份开源构建）�
    * **无本地检出**：同级目录不存在时，Gradle 退回到对 `https://github.com/IOVEYOUMC0/Farmersdelight-Plugin.git` 的 source dependency，按固定版本检出、就地构建并以同样方式解析。**这条通道需要网络。**
 
    两条通道拿到的都是 api-only jar，**只含** `com.huidu.farmersdelight.api.**` —— 不含 FD 内部类、不是可运行插件；真正的 FarmersDelight 插件会在运行时提供实现。不再需要把 jar 放进 `libs/` 手工同步。
-2. `./gradlew build`（或 `shadowJar`）→ **`build/libs/fdaddontemplate-1.0.2.jar`**。
+2. `./gradlew build`（或 `shadowJar`）→ **`build/libs/fdaddontemplate-1.2.0.jar`**。
 3. 将该 jar 放入 `plugins/` 目录，与 FarmersDelight + CraftEngine 并列。本插件使用 `paper-plugin.yml`，其中的 `dependencies.server` 条目（`CraftEngine` 与 `FarmersDelight`，均为 `load: BEFORE`、`required: true`、`join-classpath: true`）负责加载顺序与类路径访问。
+
+**用本地 CE 快照编译。** 26.10 / 26.11 等快照没有发布到 Maven，可以改为直接指向本地 CraftEngine 插件 jar：
+
+```bash
+./gradlew build -PceJar=/path/to/craft-engine-paper-plugin-26.11-SNAPSHOT.jar
+# 如果该构建把重定位后的库放在插件目录外，再加上：
+#   -PceLibraries=/path/to/plugins/CraftEngine/libs
+```
+
+该插件 jar 已包含 bukkit 与 core 类，因此会替代两个 Maven 依赖；普通构建仍可用 `-PceVersion` 选择 Maven 版本。在 FarmersDelight 工作区内构建时，该属性也会传给同级 FD 复合构建，因此还需要同时给 `-PceLibraries`（见上）。
 
 ### 附属自检（addonCheck）
 
@@ -106,7 +116,7 @@ smoke 会在附属的 `build/addon-testkit-smoke/` 复制服务端/依赖并启�
 | `runAtLocation(loc, task)` / `runLaterAtLocation(loc, task, ticks)` / `runRepeating(task, delay, period)` | Folia 安全的调度（重复任务返回一个 `ApiTask`） |
 | `awardCraftingExperience(player, loc, result, baseExp, source)` | 按配置给予原版 / CE Leveler 经验 + ProfessionCookingExperienceEvent |
 
-当前接口与构建检查见[验证记录](docs/verification-template-2026-10-15.md)。
+当前接口与构建检查见[验证记录](docs/verification-template-2026-11-28.md)。
 
 ### 版本与功能门控
 
@@ -395,11 +405,25 @@ boolean has = FarmersDelightKnifeDrops.hasRule("cow");      // 来自任意来�
 
 ## 带交互 + 逐方块保存内容的自定义方块
 
-有交互与逐位置状态的自定义方块由以下三部分组成。可直接使用 CE API，也可通过 FD 的 api.registry.ContentRegistration 注册并参与重载重应用。编译基线为 Paper 1.21.5 / CE 26.9.1，运行核对 CE 26.8.2～26.10；类名相同不代表方法兼容，新版可选 API 需要能力检测和回退。
+有交互与逐位置状态的自定义方块由以下三部分组成。可直接使用 CE API，也可通过 FD 的 api.registry.ContentRegistration 注册并参与重载重应用。编译基线为 Paper 1.21.5 / CE 26.9.1，运行核对 CE 26.8.2～26.11（26.11-SNAPSHOT 已于 2026-11-28 核对：FarmersDelight 不改代码即可编译并启动）；类名相同不代表方法兼容，新版可选 API 需要能力检测和回退。
 
 1. **方块定义** —— [`configuration/blocks.yml`](src/main/resources/craftengine/fdaddon/configuration/blocks.yml)：`blocks.fdaddon:example_block`，带有 `behavior: - type: fdaddon:example_block`、一个使其可被放置的 `block_item`，以及一个有序合成配方。碰撞来自宿主状态（`auto-state: note_block` → 实心）。无需声明 block-entity —— CraftEngine 会从 behavior 中检测到它（见下文）。
 2. **行为（Behavior）** —— [`ExampleBlockBehavior.java`](src/main/java/com/example/fdaddon/ExampleBlockBehavior.java)：`extends BlockBehavior implements EntityBlock`，重写 `useOnBlock(...)` 实现右键逻辑，并暴露一个静态的 `FACTORY`。在 `onLoad()` 中通过 `BlockBehaviors.register(Key.of("fdaddon:example_block"), FACTORY)` 注册 —— 必须在 CraftEngine 解析 `blocks.yml` *之前*完成，因为配置会通过 id 引用它。该行为是被所有已放置方块共享的**单例**，因此它本身不持有逐方块状态；在交互时它会查找被点击位置处的 block entity，并作用于该方块的控制器。
 3. **逐方块内容** —— [`ExampleBlockEntityController.java`](src/main/java/com/example/fdaddon/ExampleBlockEntityController.java)：因为该行为实现了 `EntityBlock`，CraftEngine 会为每个已放置方块创建一个 `BlockEntityController` 并**将其持久化在区块内**。你在 `saveCustomData(CompoundTag)` 中序列化你的状态，并在 `loadCustomData(CompoundTag)` 中恢复它 —— 这就是持久化的全部内容。**不要将方块状态存储在额外的 yml 中**；没有由插件管理的保存 / 加载生命周期可供写入。这正是 FD 的炖锅 / 煎锅 / 灶台保存其物品栏和进度的方式。要将某个方块标记为已更改以便 CraftEngine 重新保存它，请调用 `blockEntity.world.blockEntityChanged(pos)`。对于逐 tick 的逻辑，请在控制器上重写 `createBlockEntityTicker(...)`。
+
+4. **要保存物品？请安全掉落。** “掉落调用没抛异常”不等于物品已经进世界：即使别的插件取消了 `ItemSpawnEvent`，Paper 仍会返回一个实体包装对象。使用 [`DropSafety.spawnVerified(...)`](src/main/java/com/example/fdaddon/util/DropSafety.java)，只有它返回 true 后才能清空存储。破坏路径要把未交付内容留在方块里并取消破坏；无法取消的移除路径（爆炸、别的插件替换方块）要把剩余内容写入恢复文件 —— FD 的 `StationDropRecovery` / `DropRecoveryArchive` 是参考实现。交给玩家时用 FD 的 `ItemDelivery.giveOrDrop`，它已经校验了背包溢出掉落。永远不要先清空容器、再假设掉落成功。
+
+5. **容器示例** —— `blocks.yml` 里的 `fdaddon:example_container`，配套
+   [`ExampleContainerBehavior`](src/main/java/com/example/fdaddon/ExampleContainerBehavior.java)、
+   [`ExampleContainerController`](src/main/java/com/example/fdaddon/ExampleContainerController.java) 与
+   [`ExampleContainerBreakListener`](src/main/java/com/example/fdaddon/listener/ExampleContainerBreakListener.java)：
+   两个物品槽通过 `ItemStackUtils` 持久化；手持物品右键存入一个，空手右键取回一个。它演示了完整的掉落契约：
+   破坏监听器让控制器先掉落，生成被拒时取消破坏；`onRemove()`（爆炸、其它插件替换方块）先尽量掉落，剩余内容写入
+   `plugins/FDAddonTemplate/container-drop-recovery/*.nbt`；交给玩家走 `ItemDelivery.giveOrDrop`。可复用的部分：
+   [`StoredContents`](src/main/java/com/example/fdaddon/util/StoredContents.java)（槽位 + 确认掉落）、
+   [`DropSafety`](src/main/java/com/example/fdaddon/util/DropSafety.java)（校验生成）、
+   [`DropRecoveryArchive`](src/main/java/com/example/fdaddon/util/DropRecoveryArchive.java)（压缩 NBT 归档）。
+   `StoredContentsTest` / `DropRecoveryArchiveTest` / `ExampleContainerWiringTest` 覆盖这些失败路径。
 
 ## 调试工具 —— 接入 /fd debugtools
 

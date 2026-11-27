@@ -6,9 +6,15 @@
 # them through MiniMessage, as ExampleRecipeType does for the recipe-book titles and buttons).
 fdaddon:
   example_used: "Used this block {count} time(s) — saved in the block entity."
+  example_container_stored: "Stored one item."
+  example_container_taken: "Took one item back."
+  example_container_full: "This container is full."
+  example_container_empty: "This container is empty."
+  example_container_drop_refused: "Not broken: an item could not be dropped, so the contents were kept. Try again once the area allows item drops."
+  example_container_recovery_saved: "Container contents that could not be dropped were saved: {file} (block {pos})."
+  example_container_recovery_failed: "Container contents at {pos} could not be dropped or archived; check the logged cause."
   farmersdelight_unavailable: "FarmersDelight not available; addon features disabled."
-  api_version: "FarmersDelight api v{version} (station-query={station_query})."
-  enabled: "FDAddonTemplate enabled."
+  enabled: "FDAddonTemplate {version} enabled | FarmersDelight api v{api_version} (station-query={station_query})."
   reloaded: "Reloaded with FarmersDelight (reason: {reason})."
   recipes_loaded: "Loaded {count} FarmersDelight recipe(s)."
   food_effects_loaded: "Loaded {count} configured food effect(s)."
